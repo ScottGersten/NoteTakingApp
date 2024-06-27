@@ -46,7 +46,7 @@ jobs:
         $buildDay = Get-Date -Format "yyyy.Mdd"
         $runNumber = "$env:GITHUB_RUN_NUMBER"
         $ver = $buildDay + "." + $runNumber
-        echo "APP_VERSION=$ver" >> "$GITHUB_OUTPUT"
+        echo "APP_VERSION=$ver" >> $env:GITHUB_OUTPUT
 
     # https://github.com/actions/create-release
     - name: Create GitHub Release
