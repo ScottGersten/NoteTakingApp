@@ -1,0 +1,73 @@
+name: Publish Release
+
+on:
+  workflow_dispatch:   # this means you can manually trigger it from the github UI
+  push:  # This tells GitHub to watch for commits
+    branches:
+      - release # but ONLY commits to the master branch
+    paths:  # this says to only run the workflow if there were updates to certain files or folders
+      - 'NoteTakingApp/**/*'   # if any changes are in the project folder 
+      - '.github/workflows/release.yml'  # if there are any changes to the workflow
+
+jobs:
+  # name of the job
+  build_desktop_app:
+    runs-on: windows-latest   # WinForms apps must be built on Windows runners
+    
+    # steps for the job to do
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+      
+    # install the .NET * SDK
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+    
+    # Because this is a WinDForms app, there is an extra step of also adding msbuild.exe
+    - name: Setup MSBuild.exe
+      uses: microsoft/setup-msbuild@v1.3.2
+    
+    # Build using the publish command, instead of the build command
+    - name: Build the WinForms application in "Release" mode and targeting 64 bit Windows OS
+      run: dotnet publish NoteTakingApp\NoteTakingApp.csproj -c Release -r win-x64 -o ./build-output
+
+    - name: Combine files into zip
+      run: Compress-Archive -Path ./build-output -DestinationPath ./build-output/NoteTakingApp.zip
+
+    # uses today's date and the workflow run number to create a version number (e.g. 2024.0627.1)
+    # Is available for all subsequent steps to use via "${{ steps.version-creator.outputs.APP_VERSION }}""
+    - name: Generate version number with date and workflow Run Number
+      id: version-creator
+      run: |
+        $buildDay = Get-Date -Format "yyyy.Mdd"
+        $runNumber = "$env:GITHUB_RUN_NUMBER"
+        $ver = $buildDay + "." + $runNumber
+        echo "APP_VERSION=$ver" >> "$GITHUB_OUTPUT"
+
+    # https://github.com/actions/create-release
+    - name: Create GitHub Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: "v.${{ steps.version-creator.outputs.APP_VERSION }}"
+        release_name: "NoteTakingApp v.${{ steps.version-creator.outputs.APP_VERSION }}"
+        draft: false
+        body: "This is a new release of the NoteTaking app, enjoy!"
+
+    # https://github.com/actions/upload-release-asset
+    - name: Attach Release asset
+      id: upload-sideload-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./build-output/NoteTakingApp.zip
+        asset_name: NoteTakingApp.zip
+        asset_content_type: application/zip
