@@ -29,11 +29,13 @@
         private void InitializeComponent()
         {
             textBoxNote = new TextBox();
-            listBoxNotes = new ListBox();
             btnAddNote = new Button();
             btnDeleteNote = new Button();
             btnSaveNotes = new Button();
             btnLoadNotes = new Button();
+            btnPickColor = new Button();
+            colorDialog1 = new ColorDialog();
+            listViewNotes = new ListView();
             SuspendLayout();
             // 
             // textBoxNote
@@ -43,16 +45,6 @@
             textBoxNote.Name = "textBoxNote";
             textBoxNote.Size = new Size(354, 34);
             textBoxNote.TabIndex = 0;
-            // 
-            // listBoxNotes
-            // 
-            listBoxNotes.FormattingEnabled = true;
-            listBoxNotes.ItemHeight = 15;
-            listBoxNotes.Location = new Point(120, 106);
-            listBoxNotes.Name = "listBoxNotes";
-            listBoxNotes.Size = new Size(406, 229);
-            listBoxNotes.TabIndex = 1;
-            listBoxNotes.SelectedIndexChanged += listBox1_SelectedIndexChanged;
             // 
             // btnAddNote
             // 
@@ -94,16 +86,35 @@
             btnLoadNotes.UseVisualStyleBackColor = true;
             btnLoadNotes.Click += btnLoadNotes_Click;
             // 
+            // btnPickColor
+            // 
+            btnPickColor.Location = new Point(580, 178);
+            btnPickColor.Name = "btnPickColor";
+            btnPickColor.Size = new Size(75, 68);
+            btnPickColor.TabIndex = 6;
+            btnPickColor.Text = "Pick Color";
+            btnPickColor.UseVisualStyleBackColor = true;
+            btnPickColor.Click += btnPickColor_Click;
+            // 
+            // listViewNotes
+            // 
+            listViewNotes.Location = new Point(148, 134);
+            listViewNotes.Name = "listViewNotes";
+            listViewNotes.Size = new Size(354, 193);
+            listViewNotes.TabIndex = 7;
+            listViewNotes.UseCompatibleStateImageBehavior = false;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(705, 450);
+            Controls.Add(listViewNotes);
+            Controls.Add(btnPickColor);
             Controls.Add(btnLoadNotes);
             Controls.Add(btnSaveNotes);
             Controls.Add(btnDeleteNote);
             Controls.Add(btnAddNote);
-            Controls.Add(listBoxNotes);
             Controls.Add(textBoxNote);
             Name = "Form1";
             Text = "Form1";
@@ -115,10 +126,12 @@
         #endregion
 
         private TextBox textBoxNote;
-        private ListBox listBoxNotes;
         private Button btnAddNote;
         private Button btnDeleteNote;
         private Button btnSaveNotes;
         private Button btnLoadNotes;
+        private Button btnPickColor;
+        private ColorDialog colorDialog1;
+        private ListView listViewNotes;
     }
 }
