@@ -2,36 +2,47 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Windows.Forms;
+using System.Drawing;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Windows.Forms;
 
 namespace NoteTakingApp
 {
+    
     public partial class Form1 : Form
     {
-        private List<string> notes;
+        private List<Note> notes;
+        private Color selectedColor = Color.White;
         public Form1()
         {
             InitializeComponent();
-            notes = new List<string>();
+            notes = new List<Note>();
         }
 
         private void btnAddNote_Click(object sender, EventArgs e)
         {
-            string note = textBoxNote.Text;
-            if (!string.IsNullOrWhiteSpace(note))
+            string noteText = textBoxNote.Text;
+            if (!string.IsNullOrWhiteSpace(noteText))
             {
+                Note note = new Note { Text = noteText, BackGroundColor = ColorTranslator.ToHtml(selectedColor) };
                 notes.Add(note);
-                listBoxNotes.Items.Add(note);
+                ListViewItem item = new ListViewItem(note.Text);
+                item.BackColor = selectedColor;
+                listViewNotes.Items.Add(item);
                 textBoxNote.Clear();
+                textBoxNote.BackColor = Color.White;
+                selectedColor = Color.White;
             }
         }
 
         private void btnDeleteNote_Click(object sender, EventArgs e)
         {
-            int index = listBoxNotes.SelectedIndex;
-            if (index != -1)
+            int index = listViewNotes.SelectedIndices[0];
+            if (index > 0)
             {
                 notes.RemoveAt(index);
-                listBoxNotes.Items.RemoveAt(index);
+                listViewNotes.Items.RemoveAt(index);
             }
         }
 
@@ -39,13 +50,18 @@ namespace NoteTakingApp
         {
             SaveFileDialog sfd = new SaveFileDialog()
             {
-                Filter = "Text Files (*.txt)|*.txt|All Files (*.*)|*.*",
-                DefaultExt = "txt"
+                /*Filter = "Text Files (*.txt)|*.txt|All Files (*.*)|*.*",
+                DefaultExt = "txt"*/
+
+                Filter = "JSON Files (*.json|*.json|All Files (*.*)|*.*",
+                DefaultExt = "json"
             };
 
             if (sfd.ShowDialog() == DialogResult.OK)
             {
-                File.WriteAllLines(sfd.FileName, notes);
+                /*File.WriteAllLines(sfd.FileName, notes);*/
+                string json = JsonSerializer.Serialize(notes, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(sfd.FileName, json);
             }
         }
 
@@ -53,16 +69,37 @@ namespace NoteTakingApp
         {
             OpenFileDialog ofd = new OpenFileDialog()
             {
-                Filter = "Text Files (*.txt)|*.txt|All Files (*.*)|*.*",
-                DefaultExt = "txt"
+                Filter = "JSON Files (*.json|*.json|All Files (*.*)|*.*",
+                DefaultExt = "json"
             };
 
             if (ofd.ShowDialog() == DialogResult.OK)
             {
-                notes.Clear();
+                /*notes.Clear();
                 listBoxNotes.Items.Clear();
                 notes.AddRange(File.ReadAllLines(ofd.FileName));
-                listBoxNotes.Items.AddRange(notes.ToArray());
+                listBoxNotes.Items.AddRange(notes.ToArray());*/
+
+                string json = File.ReadAllText(ofd.FileName);
+                notes = JsonSerializer.Deserialize<List<Note>>(json);
+
+                listViewNotes.Items.Clear();
+                foreach( var note in notes)
+                {
+                    ListViewItem item = new ListViewItem(note.Text);
+                    item.BackColor = note.GetColor(); ;
+                    listViewNotes.Items.Add(item);
+                }
+
+            }
+        }
+
+        private void btnPickColor_Click(object sender, EventArgs e)
+        {
+            if (colorDialog1.ShowDialog() == DialogResult.OK)
+            {
+                selectedColor = colorDialog1.Color;
+                textBoxNote.BackColor = selectedColor;
             }
         }
 
@@ -76,6 +113,12 @@ namespace NoteTakingApp
 
         }
 
+        private void button1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+
         /*private void button1_Click(object sender, EventArgs e)
         {
 
@@ -85,5 +128,23 @@ namespace NoteTakingApp
         {
 
         }*/
+    }
+    
+    [Serializable]
+    public class Note
+    {
+        public string Text { get; set; }
+        public string BackGroundColor { get; set; }
+
+        public Note() { }
+        public Note(string text, Color backgroundColor)
+        {
+            Text = text;
+            BackGroundColor = ColorTranslator.ToHtml(backgroundColor);
+        }
+        public Color GetColor()
+        {
+            return ColorTranslator.FromHtml(BackGroundColor);
+        }
     }
 }
