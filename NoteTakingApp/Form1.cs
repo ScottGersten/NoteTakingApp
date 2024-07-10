@@ -38,9 +38,16 @@ namespace NoteTakingApp
 
         private void btnDeleteNote_Click(object sender, EventArgs e)
         {
-            int index = listViewNotes.SelectedIndices[0];
+            /*int index = listViewNotes.SelectedIndices[0];
             if (index > 0)
             {
+                notes.RemoveAt(index);
+                listViewNotes.Items.RemoveAt(index);
+            }*/
+
+            if (listViewNotes.SelectedItems.Count > 0)
+            {
+                int index = listViewNotes.SelectedItems[0].Index;
                 notes.RemoveAt(index);
                 listViewNotes.Items.RemoveAt(index);
             }

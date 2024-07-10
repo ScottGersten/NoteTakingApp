@@ -103,6 +103,7 @@
             listViewNotes.Size = new Size(354, 193);
             listViewNotes.TabIndex = 7;
             listViewNotes.UseCompatibleStateImageBehavior = false;
+            listViewNotes.MultiSelect = false;
             // 
             // Form1
             // 
