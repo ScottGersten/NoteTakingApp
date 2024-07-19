@@ -10,8 +10,6 @@ on:
       - 'NoteTakingApp/**/*'
       - '.github/workflows/release.yml'
 env:
-  PfxThumbprint: "6317f13d6d4324b3f956e732255c521558ecb235"
-  TFM: net6.0-windows10.0.19041.0
   NugetConfigPath: nuget.config
   WinformsProjectPath: NoteTakingApp\NoteTakingApp.csproj
   WappProjectPath: WapProjPackaging\WapProjPackaging.wapproj
@@ -22,7 +20,8 @@ jobs:
     runs-on: windows-latest 
     permissions:
       id-token: write
-      contents: read
+      contents: write
+      discussions: write
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -36,20 +35,14 @@ jobs:
         access-id: 'p-fq3qbjjxv839'
         static-secrets: '{"/personal-keys/mccarthy/lancelot-pfx-base64":"pfx-base64", "/personal-keys/mccarthy/lancelot-pfx-privatekey":"pfx-password"}'
 
-    # ************************| Install tools |************************ #
+    # ************************| Install tools (.NET SDK alreayds installed) |************************ #
 
-    # temporarily commenting out because the "windows-latest " runner already has the SDK installed
-    # - name: Setup .NET SDK
-    #   uses: actions/setup-dotnet@v4
-    #   with:
-    #     dotnet-version: '8.0.x'
-    
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v1.3.2
     
     # ************************| Create version numebr and update manifests |************************ #
 
-    # Uses today's date + run number to create a version number (e.g. 2024.627.1) that can be used in subsequent steps
+    # Uses today's date + run number to create a version number (e.g. 2024.627.1.0) that can be used in subsequent steps
     - name: Generate version number
       id: version-creator
       run: |
