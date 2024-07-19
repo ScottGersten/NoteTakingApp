@@ -4,43 +4,67 @@ on:
   workflow_dispatch:   # this means you can manually trigger it from the github UI
   push:  # This tells GitHub to watch for commits
     branches:
-      - release # but ONLY commits to the master branch
-    paths:  # this says to only run the workflow if there were updates to certain files or folders
-      - 'NoteTakingApp/**/*'   # if any changes are in the project folder 
-      - '.github/workflows/release.yml'  # if there are any changes to the workflow
+      - release
+    paths:
+      - 'WapProjPackaging/**/*'
+      - 'NoteTakingApp/**/*'
+      - '.github/workflows/release.yml'
 
 jobs:
-  # name of the job
-  build_desktop_app:
-    runs-on: windows-latest   # WinForms apps must be built on Windows runners
-    
-    # steps for the job to do
+  sideloading_packages:
+    runs-on: windows-latest 
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      SigningCertificate: 
+      PfxFilePath: "LancelotSoftwareLLC.pfx"
+      PfxThumbprint: "6317f13d6d4324b3f956e732255c521558ecb235"
+      Configuration: Release
+      TFM: net6.0-windows10.0.19041.0
+      BuildPlatform: "x64"
+      AppxBundlePlatforms: "x64"
+      AppxBundleMode: Always
+      AppxBuildMode: SideloadOnly
+      AppxPackageSigningEnabled: True
+      GenerateAppInstallerFile: True
+      HoursBetweenUpdateChecks: 12
+      NugetConfigPath: ${{env.GITHUB_WORKSPACE}}\nuget.config
+      SolutionPath: ${{env.GITHUB_WORKSPACE}}\NoteTakingApp.sln
+      WinFormsProjectPath: ${{env.GITHUB_WORKSPACE}}\NoteTakingApp\NoteTakingApp.csproj
+      WappProjectPath: ${{env.GITHUB_WORKSPACE}}\WapProjPackaging\WapProjPackaging.wapproj
+      AppxManifestPath: ${{env.GITHUB_WORKSPACE}}\WapProjPackaging\Package.appxmanifest
+      AppxPackageDirectory: ${{env.GITHUB_WORKSPACE}}\WapProjPackaging\AppPackages
+      ArtifactsFilePath: ${{env.GITHUB_WORKSPACE}}\WapProjPackaging\PackageProject\SideLoadPackages\SideLoadPackages.zip
     steps:
     - name: Checkout
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-      
-    # install the .NET * SDK
+
+    - name: Fetch secrets from AKeyless
+      id: akeyless
+      uses: LanceMcCarthy/akeyless-action@v3
+      with:
+        access-id: 'p-fq3qbjjxv839'
+        static-secrets: '{"/personal-keys/mccarthy/lancelot-pfx-base64":"pfx-base64", "/personal-keys/mccarthy/lancelot-pfx-privatekey":"pfx-password"}'
+
+    # ************************| Install tools |************************ #
+
+    # Install the .NET SDK
     - name: Setup .NET SDK
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
     
-    # Because this is a WinDForms app, there is an extra step of also adding msbuild.exe
+    # Because this is a WinForms app, there is an extra step of also adding msbuild.exe
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v1.3.2
     
-    # Build using the publish command, instead of the build command
-    - name: Build the WinForms application in "Release" mode and targeting 64 bit Windows OS
-      run: dotnet publish NoteTakingApp\NoteTakingApp.csproj -c Release -r win-x64 -o ./build-output
+    # ************************| Create version numebr and update manifests |************************ #
 
-    - name: Combine files into zip
-      run: Compress-Archive -Path ./build-output -DestinationPath ./build-output/NoteTakingApp.zip
-
-    # uses today's date and the workflow run number to create a version number (e.g. 2024.0627.1)
-    # Is available for all subsequent steps to use via "${{ steps.version-creator.outputs.APP_VERSION }}""
-    - name: Generate version number with date and workflow Run Number
+    # Uses today's date + run number to create a version number (e.g. 2024.627.1) that can be used in subsequent steps
+    - name: Generate version number
       id: version-creator
       run: |
         $buildDay = Get-Date -Format "yyyy.Mdd"
@@ -48,7 +72,53 @@ jobs:
         $ver = $buildDay + "." + $runNumber
         echo "APP_VERSION=$ver" >> $env:GITHUB_OUTPUT
 
-    # https://github.com/actions/create-release
+    # Update the appxmanifest for SideLoad (and signing with PFX)
+    - name: Update manifest version
+      run: |
+        [xml]$manifest = get-content "${{env.AppxManifestPath}}"
+        $manifest.Package.Identity.Version = "${{steps.version-creator.outputs.APP_VERSION}}"
+        $manifest.Package.Identity.Name = "61469LanceLotSoftware.MediaFileManager"
+        $manifest.Package.Identity.Publisher = 'CN="Lancelot Software, LLC", O="Lancelot Software, LLC", L=NORTH BILLERICA, S=Massachusetts, C=US'
+        $manifest.Package.Properties.PublisherDisplayName = "Lancelot Software"
+        $manifest.save("${{env.AppxManifestPath}}")
+
+    # ************************| Restore Codesigning Cert |************************ #
+
+    # Decode the Base64 encoded Pfx
+    - name: Decode the Pfx
+      run: |
+        $pfx_cert_byte = [System.Convert]::FromBase64String("${{steps.akeyless.outputs.pfx-base64}}")
+        $currentDirectory = Get-Location
+        $certificatePath = Join-Path -Path $currentDirectory -ChildPath "${{env.GITHUB_WORKSPACE}}" -AdditionalChildPath "${{env.PfxFilePath}}"
+        [IO.File]::WriteAllBytes("$certificatePath", $pfx_cert_byte)
+
+    # ************************| Build Sideload Packages |************************ #
+
+    - name: Restore NuGet Packages for Winforms project
+      run: dotnet restore ${{ env.WinFormsProjectPath }} --configfile ${{ env.NugetConfigPath }} --runtime ${{ env.TFM }}
+
+    - name: Restore packages for packaging project
+      run: msbuild ${{ env.WappProjectPath }} /t:Restore /p:Configuration=${{ env.Configuration }}
+
+    - name: Build wapproj to create msix app package
+      run: |
+        msbuild ${{env.WappProjectPath}} \ 
+          /p:Configuration=${{env.Configuration}} \ 
+          /p:Platform=${{ env.BuildPlatform }} \ 
+          /p:AppxBundlePlatforms="${{ env.AppxBundlePlatforms }}" \ 
+          /p:GenerateAppInstallerFile=${{env.GenerateAppInstallerFile}} \ 
+          /p:HoursBetweenUpdateChecks=${{env.HoursBetweenUpdateChecks}} \ 
+          /p:AppxPackageDir=${{env.AppxPackageDirectory}} \ 
+          /p:UapAppxPackageBuildMode=${{ env.AppxBuildMode }} \ 
+          /p:AppxBundle=${{ env.AppxBundleMode }} \ 
+          /p:PackageCertificateKeyFile="${{env.GITHUB_WORKSPACE}}\${{env.PfxFilePath}}" \ 
+          /p:PackageCertificatePassword=${{steps.akeyless.outputs.pfx-password}} \ 
+          /p:PackageCertificateThumbprint=${{env.PfxThumbprint}} \ 
+          /p:AppxPackageSigningEnabled=${{ env.AppxPackageSigningEnabled }}
+
+
+    # ************************| GitHub Release |************************ #
+
     - name: Create GitHub Release
       id: create_release
       uses: actions/create-release@v1
@@ -60,7 +130,6 @@ jobs:
         draft: false
         body: "This is a new release of the NoteTaking app, enjoy!"
 
-    # https://github.com/actions/upload-release-asset
     - name: Attach Release asset
       id: upload-sideload-asset
       uses: actions/upload-release-asset@v1
@@ -68,6 +137,39 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./build-output/NoteTakingApp.zip
-        asset_name: NoteTakingApp.zip
+        asset_path: ${{env.AppxPackageDirectory}}
+        asset_name: "*.msixbundle"
         asset_content_type: application/zip
+
+
+
+    # # Build using the publish command, instead of the build command
+    # - name: Build the WinForms application in "Release" mode and targeting 64 bit Windows OS
+    #   run: dotnet publish NoteTakingApp\NoteTakingApp.csproj -c Release -r win-x64 -o ./build-output
+
+    # - name: Combine files into zip
+    #   run: Compress-Archive -Path ./build-output -DestinationPath ./build-output/NoteTakingApp.zip
+
+    # # https://github.com/actions/create-release
+    # - name: Create GitHub Release
+    #   id: create_release
+    #   uses: actions/create-release@v1
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   with:
+    #     tag_name: "v.${{ steps.version-creator.outputs.APP_VERSION }}"
+    #     release_name: "NoteTakingApp v.${{ steps.version-creator.outputs.APP_VERSION }}"
+    #     draft: false
+    #     body: "This is a new release of the NoteTaking app, enjoy!"
+
+    # # https://github.com/actions/upload-release-asset
+    # - name: Attach Release asset
+    #   id: upload-sideload-asset
+    #   uses: actions/upload-release-asset@v1
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   with:
+    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
+    #     asset_path: ./build-output/NoteTakingApp.zip
+    #     asset_name: NoteTakingApp.zip
+    #     asset_content_type: application/zip
