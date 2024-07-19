@@ -13,6 +13,7 @@ env:
   PfxThumbprint: "6317f13d6d4324b3f956e732255c521558ecb235"
   TFM: net6.0-windows10.0.19041.0
   NugetConfigPath: nuget.config
+  WinformsProjectPath: NoteTakingApp\NoteTakingApp.csproj
   WappProjectPath: WapProjPackaging\WapProjPackaging.wapproj
   AppxPackageDirectory: WapProjPackaging\AppPackages
 
@@ -82,7 +83,10 @@ jobs:
     # ************************| Build Sideload Packages |************************ #
 
     - name: build Winforms project
-      run: dotnet build ${{env.WappProjectPath}} -c Release -r win10-x64
+      run: |
+        dotnet build ${{env.WinformsProjectPath}} -c Release -r win-x64 -t net6.0-windows
+        dotnet build ${{env.WinformsProjectPath}} -c Release -r win-x84 -t net6.0-windows
+        dotnet build ${{env.WinformsProjectPath}} -c Release -r win-arm64 -t net6.0-windows
 
     - name: Restore packages for packaging project
       run: msbuild ${{env.WappProjectPath}} /t:Restore /p:Configuration=Release
