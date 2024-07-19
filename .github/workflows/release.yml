@@ -56,7 +56,7 @@ jobs:
       run: |
         $buildDay = Get-Date -Format "yyyy.Mdd"
         $runNumber = "$env:GITHUB_RUN_NUMBER"
-        $ver = $buildDay + "." + $runNumber
+        $ver = $buildDay + "." + $runNumber + ".0"
         echo "APP_VERSION=$ver" >> $env:GITHUB_OUTPUT
 
     # Update the appxmanifest for SideLoad (and signing with PFX)
