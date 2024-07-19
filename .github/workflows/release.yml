@@ -9,6 +9,26 @@ on:
       - 'WapProjPackaging/**/*'
       - 'NoteTakingApp/**/*'
       - '.github/workflows/release.yml'
+env:
+  SigningCertificate: 
+  PfxFilePath: "LancelotSoftwareLLC.pfx"
+  PfxThumbprint: "6317f13d6d4324b3f956e732255c521558ecb235"
+  Configuration: Release
+  TFM: net6.0-windows10.0.19041.0
+  BuildPlatform: "x64"
+  AppxBundlePlatforms: "x64"
+  AppxBundleMode: Always
+  AppxBuildMode: SideloadOnly
+  AppxPackageSigningEnabled: True
+  GenerateAppInstallerFile: True
+  HoursBetweenUpdateChecks: 12
+  NugetConfigPath: nuget.config
+  SolutionPath: NoteTakingApp.sln
+  WinFormsProjectPath: NoteTakingApp\NoteTakingApp.csproj
+  WappProjectPath: WapProjPackaging\WapProjPackaging.wapproj
+  AppxManifestPath: WapProjPackaging\Package.appxmanifest
+  AppxPackageDirectory: WapProjPackaging\AppPackages
+  ArtifactsFilePath: WapProjPackaging\PackageProject\SideLoadPackages\SideLoadPackages.zip
 
 jobs:
   sideloading_packages:
@@ -16,26 +36,6 @@ jobs:
     permissions:
       id-token: write
       contents: read
-    env:
-      SigningCertificate: 
-      PfxFilePath: "LancelotSoftwareLLC.pfx"
-      PfxThumbprint: "6317f13d6d4324b3f956e732255c521558ecb235"
-      Configuration: Release
-      TFM: net6.0-windows10.0.19041.0
-      BuildPlatform: "x64"
-      AppxBundlePlatforms: "x64"
-      AppxBundleMode: Always
-      AppxBuildMode: SideloadOnly
-      AppxPackageSigningEnabled: True
-      GenerateAppInstallerFile: True
-      HoursBetweenUpdateChecks: 12
-      NugetConfigPath: ${{env.GITHUB_WORKSPACE}}\nuget.config
-      SolutionPath: ${{env.GITHUB_WORKSPACE}}\NoteTakingApp.sln
-      WinFormsProjectPath: ${{env.GITHUB_WORKSPACE}}\NoteTakingApp\NoteTakingApp.csproj
-      WappProjectPath: ${{env.GITHUB_WORKSPACE}}\WapProjPackaging\WapProjPackaging.wapproj
-      AppxManifestPath: ${{env.GITHUB_WORKSPACE}}\WapProjPackaging\Package.appxmanifest
-      AppxPackageDirectory: ${{env.GITHUB_WORKSPACE}}\WapProjPackaging\AppPackages
-      ArtifactsFilePath: ${{env.GITHUB_WORKSPACE}}\WapProjPackaging\PackageProject\SideLoadPackages\SideLoadPackages.zip
     steps:
     - name: Checkout
       uses: actions/checkout@v4
