@@ -76,9 +76,9 @@ jobs:
       id: save-pfx
       run: |
         $pfx_cert_byte = [System.Convert]::FromBase64String("${{steps.akeyless.outputs.pfx-base64}}")
-        $certificatePath = Join-Path -Path $env:GITHUB_WORKSPACE -ChildPath "LancelotSoftwareLLC.pfx"
+        $certificatePath = "${{env.GITHUB_WORKSPACE}}\LancelotSoftwareLLC.pfx"
         [IO.File]::WriteAllBytes("$certificatePath", $pfx_cert_byte)
-        echo "PFX_PATH=$certificatePath" >> $env:GITHUB_OUTPUT
+      
 
     # ************************| Build Sideload Packages |************************ #
 
@@ -92,7 +92,7 @@ jobs:
       run: msbuild ${{env.WappProjectPath}} /t:Restore /p:Configuration=Release
 
     - name: Build wapproj to create msix app package
-      run: msbuild ${{env.WappProjectPath}} /p:Configuration=Release /p:Platform=x64 /p:AppxBundlePlatforms="x86|x64|arm64" /p:UapAppxPackageBuildMode=Always /p:AppxBundle=SideloadOnly /p:AppxPackageDir=${{env.AppxPackageDirectory}} /p:PackageCertificateKeyFile="${{steps.save-pfx.ouputs.PFX_PATH}}" /p:PackageCertificatePassword=${{steps.akeyless.outputs.pfx-password}} /p:PackageCertificateThumbprint=${{env.PfxThumbprint}} /p:AppxPackageSigningEnabled=True
+      run: msbuild ${{env.WappProjectPath}} /p:Configuration=Release /p:Platform=x64 /p:AppxBundlePlatforms="x86|x64|arm64" /p:UapAppxPackageBuildMode=Always /p:AppxBundle=SideloadOnly /p:AppxPackageDir=${{env.AppxPackageDirectory}} /p:PackageCertificateKeyFile="${{env.GITHUB_WORKSPACE}}\LancelotSoftwareLLC.pfx" /p:PackageCertificatePassword=${{steps.akeyless.outputs.pfx-password}} /p:AppxPackageSigningEnabled=True
 
 
     # ************************| GitHub Release |************************ #
