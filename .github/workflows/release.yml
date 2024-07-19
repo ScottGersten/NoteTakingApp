@@ -10,25 +10,11 @@ on:
       - 'NoteTakingApp/**/*'
       - '.github/workflows/release.yml'
 env:
-  SigningCertificate: 
-  PfxFilePath: "LancelotSoftwareLLC.pfx"
   PfxThumbprint: "6317f13d6d4324b3f956e732255c521558ecb235"
-  Configuration: Release
   TFM: net6.0-windows10.0.19041.0
-  BuildPlatform: "x64"
-  AppxBundlePlatforms: "x64"
-  AppxBundleMode: Always
-  AppxBuildMode: SideloadOnly
-  AppxPackageSigningEnabled: True
-  GenerateAppInstallerFile: True
-  HoursBetweenUpdateChecks: 12
   NugetConfigPath: nuget.config
-  SolutionPath: NoteTakingApp.sln
-  WinFormsProjectPath: NoteTakingApp\NoteTakingApp.csproj
   WappProjectPath: WapProjPackaging\WapProjPackaging.wapproj
-  AppxManifestPath: WapProjPackaging\Package.appxmanifest
   AppxPackageDirectory: WapProjPackaging\AppPackages
-  ArtifactsFilePath: WapProjPackaging\PackageProject\SideLoadPackages\SideLoadPackages.zip
 
 jobs:
   sideloading_packages:
@@ -44,7 +30,7 @@ jobs:
 
     - name: Fetch secrets from AKeyless
       id: akeyless
-      uses: LanceMcCarthy/akeyless-action@v3
+      uses: LanceMcCarthy/akeyless-action@v4
       with:
         access-id: 'p-fq3qbjjxv839'
         static-secrets: '{"/personal-keys/mccarthy/lancelot-pfx-base64":"pfx-base64", "/personal-keys/mccarthy/lancelot-pfx-privatekey":"pfx-password"}'
@@ -75,46 +61,34 @@ jobs:
     # Update the appxmanifest for SideLoad (and signing with PFX)
     - name: Update manifest version
       run: |
-        [xml]$manifest = get-content "${{env.AppxManifestPath}}"
+        [xml]$manifest = get-content "WapProjPackaging\Package.appxmanifest"
         $manifest.Package.Identity.Version = "${{steps.version-creator.outputs.APP_VERSION}}"
         $manifest.Package.Identity.Name = "61469LanceLotSoftware.MediaFileManager"
         $manifest.Package.Identity.Publisher = 'CN="Lancelot Software, LLC", O="Lancelot Software, LLC", L=NORTH BILLERICA, S=Massachusetts, C=US'
         $manifest.Package.Properties.PublisherDisplayName = "Lancelot Software"
-        $manifest.save("${{env.AppxManifestPath}}")
+        $manifest.save("WapProjPackaging\Package.appxmanifest")
 
     # ************************| Restore Codesigning Cert |************************ #
 
     # Decode the Base64 encoded Pfx
-    - name: Decode the Pfx
+    - name: Decode base64 and save code signing certificate PFX
+      id: save-pfx
       run: |
         $pfx_cert_byte = [System.Convert]::FromBase64String("${{steps.akeyless.outputs.pfx-base64}}")
-        $currentDirectory = Get-Location
-        $certificatePath = Join-Path -Path $currentDirectory -ChildPath "${{env.GITHUB_WORKSPACE}}" -AdditionalChildPath "${{env.PfxFilePath}}"
+        $certificatePath = Join-Path -Path $env:GITHUB_WORKSPACE -ChildPath "LancelotSoftwareLLC.pfx"
         [IO.File]::WriteAllBytes("$certificatePath", $pfx_cert_byte)
+        echo "PFX_PATH=$certificatePath" >> $env:GITHUB_OUTPUT
 
     # ************************| Build Sideload Packages |************************ #
 
     # - name: Restore NuGet Packages for Winforms project
-    #   run: dotnet restore ${{ env.WappProjectPath }} --configfile ${{ env.NugetConfigPath }} --runtime ${{ env.TFM }}
+    #   run: dotnet restore ${{env.WappProjectPath}} --configfile ${{env.NugetConfigPath}} --runtime ${{env.TFM}}
 
     - name: Restore packages for packaging project
-      run: msbuild ${{ env.WappProjectPath }} /t:Restore /p:Configuration=${{ env.Configuration }}
+      run: msbuild ${{env.WappProjectPath}} /t:Restore /p:Configuration=Release
 
     - name: Build wapproj to create msix app package
-      run: |
-        msbuild ${{env.WappProjectPath}} \ 
-          /p:Configuration=${{env.Configuration}} \ 
-          /p:Platform=${{ env.BuildPlatform }} \ 
-          /p:AppxBundlePlatforms="${{ env.AppxBundlePlatforms }}" \ 
-          /p:GenerateAppInstallerFile=${{env.GenerateAppInstallerFile}} \ 
-          /p:HoursBetweenUpdateChecks=${{env.HoursBetweenUpdateChecks}} \ 
-          /p:AppxPackageDir=${{env.AppxPackageDirectory}} \ 
-          /p:UapAppxPackageBuildMode=${{ env.AppxBuildMode }} \ 
-          /p:AppxBundle=${{ env.AppxBundleMode }} \ 
-          /p:PackageCertificateKeyFile="${{env.GITHUB_WORKSPACE}}\${{env.PfxFilePath}}" \ 
-          /p:PackageCertificatePassword=${{steps.akeyless.outputs.pfx-password}} \ 
-          /p:PackageCertificateThumbprint=${{env.PfxThumbprint}} \ 
-          /p:AppxPackageSigningEnabled=${{ env.AppxPackageSigningEnabled }}
+      run: msbuild ${{env.WappProjectPath}} /p:Configuration=Release /p:Platform=x64 /p:AppxBundlePlatforms="x86|x64|arm64" /p:UapAppxPackageBuildMode=Always /p:AppxBundle=SideloadOnly /p:AppxPackageDir=${{env.AppxPackageDirectory}} /p:PackageCertificateKeyFile="${{steps.save-pfx.ouputs.PFX_PATH}}" /p:PackageCertificatePassword=${{steps.akeyless.outputs.pfx-password}} /p:PackageCertificateThumbprint=${{env.PfxThumbprint}} /p:AppxPackageSigningEnabled=True
 
 
     # ************************| GitHub Release |************************ #
@@ -123,10 +97,10 @@ jobs:
       id: create_release
       uses: actions/create-release@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
       with:
-        tag_name: "v.${{ steps.version-creator.outputs.APP_VERSION }}"
-        release_name: "NoteTakingApp v.${{ steps.version-creator.outputs.APP_VERSION }}"
+        tag_name: "v.${{steps.version-creator.outputs.APP_VERSION}}"
+        release_name: "NoteTakingApp v.${{steps.version-creator.outputs.APP_VERSION}}"
         draft: false
         body: "This is a new release of the NoteTaking app, enjoy!"
 
@@ -134,13 +108,12 @@ jobs:
       id: upload-sideload-asset
       uses: actions/upload-release-asset@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        upload_url: ${{steps.create_release.outputs.upload_url}}
         asset_path: ${{env.AppxPackageDirectory}}
         asset_name: "*.msixbundle"
         asset_content_type: application/zip
-
 
 
     # # Build using the publish command, instead of the build command
