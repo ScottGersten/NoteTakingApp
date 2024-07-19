@@ -41,7 +41,7 @@ jobs:
     - name: Setup .NET SDK
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '8.0.x'
+        dotnet-version: '6.0.x'
     
     # Because this is a WinForms app, there is an extra step of also adding msbuild.exe
     - name: Setup MSBuild.exe
@@ -81,8 +81,8 @@ jobs:
 
     # ************************| Build Sideload Packages |************************ #
 
-    - name: Restore NuGet Packages for Winforms project
-      run: dotnet build ${{env.WappProjectPath}} -c Release
+    - name: build Winforms project
+      run: dotnet build ${{env.WappProjectPath}} -c Release -r win10-x64
 
     - name: Restore packages for packaging project
       run: msbuild ${{env.WappProjectPath}} /t:Restore /p:Configuration=Release
