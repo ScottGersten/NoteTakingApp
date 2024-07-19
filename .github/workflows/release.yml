@@ -82,7 +82,7 @@ jobs:
     # ************************| Build Sideload Packages |************************ #
 
     - name: Restore NuGet Packages for Winforms project
-      run: dotnet restore ${{env.WappProjectPath}} --configfile ${{env.NugetConfigPath}}
+      run: dotnet build ${{env.WappProjectPath}} -c Release
 
     - name: Restore packages for packaging project
       run: msbuild ${{env.WappProjectPath}} /t:Restore /p:Configuration=Release
