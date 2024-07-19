@@ -84,9 +84,9 @@ jobs:
 
     - name: build Winforms project
       run: |
-        dotnet build ${{env.WinformsProjectPath}} -c Release -r win-x64 -t net6.0-windows
-        dotnet build ${{env.WinformsProjectPath}} -c Release -r win-x84 -t net6.0-windows
-        dotnet build ${{env.WinformsProjectPath}} -c Release -r win-arm64 -t net6.0-windows
+        dotnet build ${{env.WinformsProjectPath}} -c Release -r win-x64
+        dotnet build ${{env.WinformsProjectPath}} -c Release -r win-x84
+        dotnet build ${{env.WinformsProjectPath}} -c Release -r win-arm64
 
     - name: Restore packages for packaging project
       run: msbuild ${{env.WappProjectPath}} /t:Restore /p:Configuration=Release
