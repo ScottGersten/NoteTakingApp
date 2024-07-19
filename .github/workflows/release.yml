@@ -38,13 +38,12 @@ jobs:
 
     # ************************| Install tools |************************ #
 
-    # Install the .NET SDK
-    - name: Setup .NET SDK
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '6.0.x'
+    # temporarily commenting out because the "windows-latest " runner already has the SDK installed
+    # - name: Setup .NET SDK
+    #   uses: actions/setup-dotnet@v4
+    #   with:
+    #     dotnet-version: '8.0.x'
     
-    # Because this is a WinForms app, there is an extra step of also adding msbuild.exe
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v1.3.2
     
@@ -80,7 +79,7 @@ jobs:
         [IO.File]::WriteAllBytes("$certificatePath", $pfx_cert_byte)
       
 
-    # ************************| Build Sideload Packages |************************ #
+    # ************************| Build Sideload MSIX Packages |************************ #
 
     - name: build Winforms project
       run: |
@@ -99,54 +98,9 @@ jobs:
 
     - name: Create GitHub Release
       id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      uses: softprops/action-gh-release@v2
       with:
-        tag_name: "v.${{steps.version-creator.outputs.APP_VERSION}}"
-        release_name: "NoteTakingApp v.${{steps.version-creator.outputs.APP_VERSION}}"
-        draft: false
-        body: "This is a new release of the NoteTaking app, enjoy!"
-
-    - name: Attach Release asset
-      id: upload-sideload-asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-      with:
-        upload_url: ${{steps.create_release.outputs.upload_url}}
-        asset_path: "*.msixbundle"
-        asset_name: "NoteTakingApp.${{steps.version-creator.outputs.APP_VERSION}}.msixbundle"
-        asset_content_type: application/zip
-
-
-    # # Build using the publish command, instead of the build command
-    # - name: Build the WinForms application in "Release" mode and targeting 64 bit Windows OS
-    #   run: dotnet publish NoteTakingApp\NoteTakingApp.csproj -c Release -r win-x64 -o ./build-output
-
-    # - name: Combine files into zip
-    #   run: Compress-Archive -Path ./build-output -DestinationPath ./build-output/NoteTakingApp.zip
-
-    # # https://github.com/actions/create-release
-    # - name: Create GitHub Release
-    #   id: create_release
-    #   uses: actions/create-release@v1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     tag_name: "v.${{ steps.version-creator.outputs.APP_VERSION }}"
-    #     release_name: "NoteTakingApp v.${{ steps.version-creator.outputs.APP_VERSION }}"
-    #     draft: false
-    #     body: "This is a new release of the NoteTaking app, enjoy!"
-
-    # # https://github.com/actions/upload-release-asset
-    # - name: Attach Release asset
-    #   id: upload-sideload-asset
-    #   uses: actions/upload-release-asset@v1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-    #     asset_path: ./build-output/NoteTakingApp.zip
-    #     asset_name: NoteTakingApp.zip
-    #     asset_content_type: application/zip
+        name: "NoteTakingApp v.${{steps.version-creator.outputs.APP_VERSION}}"
+        tag_name: "v${{steps.version-creator.outputs.APP_VERSION}}"
+        body: "This is v.${{steps.version-creator.outputs.APP_VERSION}} of the NoteTaking app, enjoy!"
+        files: "*.msixbundle"
