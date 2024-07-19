@@ -16,7 +16,6 @@ env:
   WinformsProjectPath: NoteTakingApp\NoteTakingApp.csproj
   WappProjectPath: WapProjPackaging\WapProjPackaging.wapproj
   AppxPackageDirectory: WapProjPackaging\AppPackages
-  ArtifactsFilePath: WapProjPackaging\AppPackages\SideLoadPackages\SideLoadPackages.zip
 
 jobs:
   sideloading_packages:
