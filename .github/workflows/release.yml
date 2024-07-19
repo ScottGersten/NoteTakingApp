@@ -16,6 +16,7 @@ env:
   WinformsProjectPath: NoteTakingApp\NoteTakingApp.csproj
   WappProjectPath: WapProjPackaging\WapProjPackaging.wapproj
   AppxPackageDirectory: WapProjPackaging\AppPackages
+  ArtifactsFilePath: WapProjPackaging\AppPackages\SideLoadPackages\SideLoadPackages.zip
 
 jobs:
   sideloading_packages:
@@ -115,8 +116,8 @@ jobs:
         GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
       with:
         upload_url: ${{steps.create_release.outputs.upload_url}}
-        asset_path: ${{env.AppxPackageDirectory}}
-        asset_name: "*.msixbundle"
+        asset_path: "*.msixbundle"
+        asset_name: "NoteTakingApp.${{steps.version-creator.outputs.APP_VERSION}}.msixbundle"
         asset_content_type: application/zip
 
 
