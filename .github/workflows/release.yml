@@ -94,8 +94,8 @@ jobs:
 
     # ************************| Build Sideload Packages |************************ #
 
-    - name: Restore NuGet Packages for Winforms project
-      run: dotnet restore ${{ env.WinFormsProjectPath }} --configfile ${{ env.NugetConfigPath }} --runtime ${{ env.TFM }}
+    # - name: Restore NuGet Packages for Winforms project
+    #   run: dotnet restore ${{ env.WappProjectPath }} --configfile ${{ env.NugetConfigPath }} --runtime ${{ env.TFM }}
 
     - name: Restore packages for packaging project
       run: msbuild ${{ env.WappProjectPath }} /t:Restore /p:Configuration=${{ env.Configuration }}
