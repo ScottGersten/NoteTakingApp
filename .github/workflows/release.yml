@@ -83,7 +83,7 @@ jobs:
       run: msbuild ${{env.WapProjectPath}} /t:Restore /p:Configuration=Release
 
     - name: Build wapproj to create msix app package
-      run: msbuild ${{env.WapProjectPath}} /p:Configuration=Release /p:Platform=x64 /p:AppxBundlePlatforms="x86|x64|arm64" /p:UapAppxPackageBuildMode=Always /p:AppxBundle=SideloadOnly /p:PackageCertificateKeyFile="${{env.GITHUB_WORKSPACE}}\LancelotSoftwareLLC.pfx" /p:PackageCertificatePassword=${{steps.akeyless.outputs.pfx-password}} /p:AppxPackageSigningEnabled=True /p:AppxPackageDir=${{env.PackageOutputDir}}
+      run: msbuild ${{env.WapProjectPath}} /p:Configuration=Release /p:Platform=x64 /p:AppxBundlePlatforms="x86|x64|arm64" /p:UapAppxPackageBuildMode=SideloadOnly /p:AppxBundle=Always /p:PackageCertificateKeyFile="${{env.GITHUB_WORKSPACE}}\LancelotSoftwareLLC.pfx" /p:PackageCertificatePassword=${{steps.akeyless.outputs.pfx-password}} /p:AppxPackageSigningEnabled=True /p:AppxPackageDir=${{env.PackageOutputDir}}
 
 
     # ************************| GitHub Release |************************ #
