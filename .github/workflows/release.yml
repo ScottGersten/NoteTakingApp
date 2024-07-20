@@ -10,10 +10,10 @@ on:
       - 'NoteTakingApp/**/*'
       - '.github/workflows/release.yml'
 env:
-  NugetConfigPath: nuget.config
-  WinformsProjectPath: NoteTakingApp\NoteTakingApp.csproj
-  WappProjectPath: WapProjPackaging\WapProjPackaging.wapproj
-  AppxPackageDirectory: WapProjPackaging\AppPackages
+  WinformsProjectPath: ${{github.workspace}}\NoteTakingApp\NoteTakingApp.csproj
+  WapProjectPath: ${{github.workspace}}\WapProjPackaging\WapProjPackaging.wapproj
+  PackageOutputDir: ${{github.workspace}}\WapProjPackaging\AppPackages
+  PfxFilePath: ${{github.workspace}}\LancelotSoftwareLLC.pfx
 
 jobs:
   sideloading_packages:
@@ -56,7 +56,7 @@ jobs:
       run: |
         [xml]$manifest = get-content "WapProjPackaging\Package.appxmanifest"
         $manifest.Package.Identity.Version = "${{steps.version-creator.outputs.APP_VERSION}}"
-        $manifest.Package.Identity.Name = "61469LanceLotSoftware.MediaFileManager"
+        $manifest.Package.Identity.Name = "12345Gerstenware.NoteTakingApp"
         $manifest.Package.Identity.Publisher = 'CN="Lancelot Software, LLC", O="Lancelot Software, LLC", L=NORTH BILLERICA, S=Massachusetts, C=US'
         $manifest.Package.Properties.PublisherDisplayName = "Lancelot Software"
         $manifest.save("WapProjPackaging\Package.appxmanifest")
@@ -68,8 +68,7 @@ jobs:
       id: save-pfx
       run: |
         $pfx_cert_byte = [System.Convert]::FromBase64String("${{steps.akeyless.outputs.pfx-base64}}")
-        $certificatePath = "${{env.GITHUB_WORKSPACE}}\LancelotSoftwareLLC.pfx"
-        [IO.File]::WriteAllBytes("$certificatePath", $pfx_cert_byte)
+        [IO.File]::WriteAllBytes("${{env.PfxFilePath}}", $pfx_cert_byte)
       
 
     # ************************| Build Sideload MSIX Packages |************************ #
@@ -77,17 +76,21 @@ jobs:
     - name: build Winforms project
       run: |
         dotnet build ${{env.WinformsProjectPath}} -c Release -r win-x64
-        dotnet build ${{env.WinformsProjectPath}} -c Release -r win-x84
-        dotnet build ${{env.WinformsProjectPath}} -c Release -r win-arm64
 
     - name: Restore packages for packaging project
-      run: msbuild ${{env.WappProjectPath}} /t:Restore /p:Configuration=Release
+      run: msbuild ${{env.WapProjectPath}} /t:Restore /p:Configuration=Release
 
     - name: Build wapproj to create msix app package
-      run: msbuild ${{env.WappProjectPath}} /p:Configuration=Release /p:Platform=x64 /p:AppxBundlePlatforms="x86|x64|arm64" /p:UapAppxPackageBuildMode=Always /p:AppxBundle=SideloadOnly /p:AppxPackageDir=${{env.AppxPackageDirectory}} /p:PackageCertificateKeyFile="${{env.GITHUB_WORKSPACE}}\LancelotSoftwareLLC.pfx" /p:PackageCertificatePassword=${{steps.akeyless.outputs.pfx-password}} /p:AppxPackageSigningEnabled=True
+      run: msbuild ${{env.WapProjectPath}} /p:Configuration=Release  /p:Platform=x64 /p:AppxBundlePlatforms="x64" /p:UapAppxPackageBuildMode=SideloadOnly /p:AppxBundle=Always /p:PackageCertificateKeyFile="${{env.PfxFilePath}}" /p:PackageCertificatePassword="${{steps.akeyless.outputs.pfx-password}}" /p:AppxPackageSigningEnabled=True /p:AppxPackageDir="${{env.PackageOutputDir}}"
 
 
     # ************************| GitHub Release |************************ #
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: "v.${{steps.version-creator.outputs.APP_VERSION}}.msixbundle"
+        if-no-files-found: error
+        path: ${{env.PackageOutputDir}}
 
     - name: Create GitHub Release
       id: create_release
@@ -96,4 +99,4 @@ jobs:
         name: "NoteTakingApp v.${{steps.version-creator.outputs.APP_VERSION}}"
         tag_name: "v${{steps.version-creator.outputs.APP_VERSION}}"
         body: "This is v.${{steps.version-creator.outputs.APP_VERSION}} of the NoteTaking app, enjoy!"
-        files: "*.msixbundle"
+        files: ${{github.workspace}}/**/*.msixbundle
