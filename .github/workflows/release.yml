@@ -10,9 +10,10 @@ on:
       - 'NoteTakingApp/**/*'
       - '.github/workflows/release.yml'
 env:
-  WinformsProjectPath: NoteTakingApp\NoteTakingApp.csproj
-  WapProjectPath: WapProjPackaging\WapProjPackaging.wapproj
-  PackageOutputDir: WapProjPackaging\AppPackages
+  WinformsProjectPath: ${{github.workspace}}\NoteTakingApp\NoteTakingApp.csproj
+  WapProjectPath: ${{github.workspace}}\WapProjPackaging\WapProjPackaging.wapproj
+  PackageOutputDir: ${{github.workspace}}\WapProjPackaging\AppPackages
+  PfxFilePath: ${{github.workspace}}\LancelotSoftwareLLC.pfx
 
 jobs:
   sideloading_packages:
@@ -67,7 +68,7 @@ jobs:
       id: save-pfx
       run: |
         $pfx_cert_byte = [System.Convert]::FromBase64String("${{steps.akeyless.outputs.pfx-base64}}")
-        $certificatePath = "${{env.GITHUB_WORKSPACE}}\LancelotSoftwareLLC.pfx"
+        $certificatePath = ${{env.PfxFilePath}}
         [IO.File]::WriteAllBytes("$certificatePath", $pfx_cert_byte)
       
 
@@ -81,7 +82,7 @@ jobs:
       run: msbuild ${{env.WapProjectPath}} /t:Restore /p:Configuration=Release
 
     - name: Build wapproj to create msix app package
-      run: msbuild ${{env.WapProjectPath}} /p:Configuration=Release  /p:Platform=x64 /p:AppxBundlePlatforms="x64" /p:UapAppxPackageBuildMode=SideloadOnly /p:AppxBundle=Always /p:PackageCertificateKeyFile="${{env.GITHUB_WORKSPACE}}\LancelotSoftwareLLC.pfx" /p:PackageCertificatePassword=${{steps.akeyless.outputs.pfx-password}} /p:AppxPackageSigningEnabled=True /p:AppxPackageDir=${{env.PackageOutputDir}}
+      run: msbuild ${{env.WapProjectPath}} /p:Configuration=Release  /p:Platform=x64 /p:AppxBundlePlatforms="x64" /p:UapAppxPackageBuildMode=SideloadOnly /p:AppxBundle=Always /p:PackageCertificateKeyFile=${{env.PfxFilePath}} /p:PackageCertificatePassword=${{steps.akeyless.outputs.pfx-password}} /p:AppxPackageSigningEnabled=True /p:AppxPackageDir=${{env.PackageOutputDir}}
 
 
     # ************************| GitHub Release |************************ #
@@ -89,7 +90,8 @@ jobs:
     - uses: actions/upload-artifact@v4
       with:
         name: "v.${{steps.version-creator.outputs.APP_VERSION}}.msixbundle"
-        path: "WapProjPackaging/AppPackages/WapProjPackaging_${{steps.version-creator.outputs.APP_VERSION}}_Test/WapProjPackaging_${{steps.version-creator.outputs.APP_VERSION}}_x64.msixbundle"
+        if-no-files-found: error
+        path: ${{env.PackageOutputDir}}
 
     - name: Create GitHub Release
       id: create_release
@@ -98,4 +100,4 @@ jobs:
         name: "NoteTakingApp v.${{steps.version-creator.outputs.APP_VERSION}}"
         tag_name: "v${{steps.version-creator.outputs.APP_VERSION}}"
         body: "This is v.${{steps.version-creator.outputs.APP_VERSION}} of the NoteTaking app, enjoy!"
-        files: "WapProjPackaging/AppPackages/WapProjPackaging_${{steps.version-creator.outputs.APP_VERSION}}_Test/WapProjPackaging_${{steps.version-creator.outputs.APP_VERSION}}_x64.msixbundle"
+        files: ${{github.workspace}}/**/*.msixbundle
