@@ -76,14 +76,12 @@ jobs:
     - name: build Winforms project
       run: |
         dotnet build ${{env.WinformsProjectPath}} -c Release -r win-x64
-        dotnet build ${{env.WinformsProjectPath}} -c Release -r win-x84
-        dotnet build ${{env.WinformsProjectPath}} -c Release -r win-arm64
 
     - name: Restore packages for packaging project
       run: msbuild ${{env.WapProjectPath}} /t:Restore /p:Configuration=Release
 
     - name: Build wapproj to create msix app package
-      run: msbuild ${{env.WapProjectPath}} /p:Configuration=Release /p:Platform=x64 /p:AppxBundlePlatforms="x86|x64|arm64" /p:UapAppxPackageBuildMode=SideloadOnly /p:AppxBundle=Always /p:PackageCertificateKeyFile="${{env.GITHUB_WORKSPACE}}\LancelotSoftwareLLC.pfx" /p:PackageCertificatePassword=${{steps.akeyless.outputs.pfx-password}} /p:AppxPackageSigningEnabled=True /p:AppxPackageDir=${{env.PackageOutputDir}}
+      run: msbuild ${{env.WapProjectPath}} /p:Configuration=Release  /p:Platform=x64 /p:AppxBundlePlatforms="x64" /p:UapAppxPackageBuildMode=SideloadOnly /p:AppxBundle=Always /p:PackageCertificateKeyFile="${{env.GITHUB_WORKSPACE}}\LancelotSoftwareLLC.pfx" /p:PackageCertificatePassword=${{steps.akeyless.outputs.pfx-password}} /p:AppxPackageSigningEnabled=True /p:AppxPackageDir=${{env.PackageOutputDir}}
 
 
     # ************************| GitHub Release |************************ #
@@ -91,7 +89,7 @@ jobs:
     - uses: actions/upload-artifact@v4
       with:
         name: "v.${{steps.version-creator.outputs.APP_VERSION}}.msixbundle"
-        path: "${{env.PackageOutputDir}}/*.msixbundle"
+        path: "${{env.PackageOutputDir}}/**/*.msixbundle"
 
     - name: Create GitHub Release
       id: create_release
@@ -100,4 +98,4 @@ jobs:
         name: "NoteTakingApp v.${{steps.version-creator.outputs.APP_VERSION}}"
         tag_name: "v${{steps.version-creator.outputs.APP_VERSION}}"
         body: "This is v.${{steps.version-creator.outputs.APP_VERSION}} of the NoteTaking app, enjoy!"
-        files: "${{env.PackageOutputDir}}/*.msixbundle"
+        files: "${{env.PackageOutputDir}}/**/*.msixbundle"
