@@ -7,19 +7,19 @@
   IgnorableNamespaces="uap rescap">
 
   <Identity
-    Name="200a3764-e960-4185-ba7d-601408b98e88"
+    Name="12345Gerstenware.NoteTakingApp"
     Publisher="CN=&quot;Lancelot Software, LLC&quot;, O=&quot;Lancelot Software, LLC&quot;, L=NORTH BILLERICA, S=Massachusetts, C=US"
-    Version="1.0.16.0" />
+    Version="1.0.0.0" />
 
   <Properties>
-    <DisplayName>WapProjPackaging</DisplayName>
-    <PublisherDisplayName>baseb</PublisherDisplayName>
+    <DisplayName>Note Taking App</DisplayName>
+    <PublisherDisplayName>Gerstenware</PublisherDisplayName>
     <Logo>Images\StoreLogo.png</Logo>
   </Properties>
 
   <Dependencies>
     <TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.0.0" MaxVersionTested="10.0.0.0" />
-    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.14393.0" MaxVersionTested="10.0.14393.0" />
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.14393.0" MaxVersionTested="10.0.19041.0" />
   </Dependencies>
 
   <Resources>
