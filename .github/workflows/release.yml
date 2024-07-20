@@ -68,8 +68,7 @@ jobs:
       id: save-pfx
       run: |
         $pfx_cert_byte = [System.Convert]::FromBase64String("${{steps.akeyless.outputs.pfx-base64}}")
-        $certificatePath = ${{env.PfxFilePath}}
-        [IO.File]::WriteAllBytes("$certificatePath", $pfx_cert_byte)
+        [IO.File]::WriteAllBytes("${{env.PfxFilePath}}", $pfx_cert_byte)
       
 
     # ************************| Build Sideload MSIX Packages |************************ #
@@ -82,7 +81,7 @@ jobs:
       run: msbuild ${{env.WapProjectPath}} /t:Restore /p:Configuration=Release
 
     - name: Build wapproj to create msix app package
-      run: msbuild ${{env.WapProjectPath}} /p:Configuration=Release  /p:Platform=x64 /p:AppxBundlePlatforms="x64" /p:UapAppxPackageBuildMode=SideloadOnly /p:AppxBundle=Always /p:PackageCertificateKeyFile=${{env.PfxFilePath}} /p:PackageCertificatePassword=${{steps.akeyless.outputs.pfx-password}} /p:AppxPackageSigningEnabled=True /p:AppxPackageDir=${{env.PackageOutputDir}}
+      run: msbuild ${{env.WapProjectPath}} /p:Configuration=Release  /p:Platform=x64 /p:AppxBundlePlatforms="x64" /p:UapAppxPackageBuildMode=SideloadOnly /p:AppxBundle=Always /p:PackageCertificateKeyFile="${{env.PfxFilePath}}" /p:PackageCertificatePassword="${{steps.akeyless.outputs.pfx-password}}" /p:AppxPackageSigningEnabled=True /p:AppxPackageDir="${{env.PackageOutputDir}}"
 
 
     # ************************| GitHub Release |************************ #
