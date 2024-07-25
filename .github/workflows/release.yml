@@ -14,6 +14,9 @@ env:
   WapProjectPath: ${{github.workspace}}\WapProjPackaging\WapProjPackaging.wapproj
   PackageOutputDir: ${{github.workspace}}\WapProjPackaging\AppPackages
   PfxFilePath: ${{github.workspace}}\LancelotSoftwareLLC.pfx
+  InstallerUri: "https://dvlup.blob.core.windows.net/general-app-files/Installers/NoteTakingApp/"
+  HoursBetweenUpdateChecks: 1
+  GenerateAppInstaller: true
 
 jobs:
   sideloading_packages:
@@ -33,14 +36,16 @@ jobs:
       uses: LanceMcCarthy/akeyless-action@v4
       with:
         access-id: 'p-fq3qbjjxv839'
-        static-secrets: '{"/personal-keys/mccarthy/lancelot-pfx-base64":"pfx-base64", "/personal-keys/mccarthy/lancelot-pfx-privatekey":"pfx-password"}'
+        static-secrets: '{"/personal-keys/mccarthy/lancelot-pfx-base64":"pfx-base64", "/personal-keys/mccarthy/lancelot-pfx-privatekey":"pfx-password", "/personal-keys/mccarthy/azure-storage-dvlup-connectionstr":"azure-blob-connection-string"}'
+
 
     # ************************| Install tools (.NET SDK alreayds installed) |************************ #
 
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v1.3.2
+
     
-    # ************************| Create version numebr and update manifests |************************ #
+    # ************************| Create version number and update manifests |************************ #
 
     # Uses today's date + run number to create a version number (e.g. 2024.627.1.0) that can be used in subsequent steps
     - name: Generate version number
@@ -60,6 +65,7 @@ jobs:
         $manifest.Package.Identity.Publisher = 'CN="Lancelot Software, LLC", O="Lancelot Software, LLC", L=NORTH BILLERICA, S=Massachusetts, C=US'
         $manifest.Package.Properties.PublisherDisplayName = "Lancelot Software"
         $manifest.save("WapProjPackaging\Package.appxmanifest")
+
 
     # ************************| Restore Codesigning Cert |************************ #
 
@@ -81,7 +87,28 @@ jobs:
       run: msbuild ${{env.WapProjectPath}} /t:Restore /p:Configuration=Release
 
     - name: Build wapproj to create msix app package
-      run: msbuild ${{env.WapProjectPath}} /p:Configuration=Release  /p:Platform=x64 /p:AppxBundlePlatforms="x64" /p:UapAppxPackageBuildMode=SideloadOnly /p:AppxBundle=Always /p:PackageCertificateKeyFile="${{env.PfxFilePath}}" /p:PackageCertificatePassword="${{steps.akeyless.outputs.pfx-password}}" /p:AppxPackageSigningEnabled=True /p:AppxPackageDir="${{env.PackageOutputDir}}" /p:GenerateAppInstallerFile=true /p:AppInstallerUri=some-online-location-like-Azure-blob /p:HoursBetweenUpdateChecks=12
+      run: msbuild ${{env.WapProjectPath}} /p:Configuration=Release /p:Platform=x64 /p:AppxBundlePlatforms="x64" /p:UapAppxPackageBuildMode=SideloadOnly /p:AppxBundle=Always /p:PackageCertificateKeyFile="${{env.PfxFilePath}}" /p:PackageCertificatePassword="${{steps.akeyless.outputs.pfx-password}}" /p:AppxPackageSigningEnabled=True /p:AppxPackageDir="${{env.PackageOutputDir}}" /p:GenerateAppInstallerFile=${{env.GenerateAppInstaller}} /p:AppInstallerUri="${{env.InstallerUri}}" /p:HoursBetweenUpdateChecks=${{env.HoursBetweenUpdateChecks}}
+
+
+    # ************************| Delete the Codesigning Cert |************************ #
+    
+    - name: Delete the .pfx
+      run: Remove-Item -path "${{env.WapProjectDirectory}}\${{env.SigningCertificate}}"
+
+
+    # ************************| Azure Blob Upload |************************ #
+
+    # This automatically distributes the sideLoad package, which users can visit the index.html page and run the appinstaller
+    - name: Uploading appInstaller to Azure Blob
+      id: sideload-blob-upload
+      uses: LanceMcCarthy/Action-AzureBlobUpload@v3
+      with:
+        connection_string: "${{steps.akeyless.outputs.azure-blob-connection-string}}"
+        container_name: general-app-files
+        source_folder: ${{env.PackageOutputDir}}
+        destination_folder: Installers/NoteTakingApp
+        clean_destination_folder: true
+        is_recursive: true
 
 
     # ************************| GitHub Release |************************ #
