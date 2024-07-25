@@ -13,7 +13,8 @@ namespace NoteTakingApp
     public partial class Form1 : Form
     {
         private List<Note> notes;
-        private Color selectedColor = Color.White;
+        private Color selectedBackColor = Color.White;
+        private Color selectedTextColor = Color.White;
         public Form1()
         {
             InitializeComponent();
@@ -25,14 +26,23 @@ namespace NoteTakingApp
             string noteText = textBoxNote.Text;
             if (!string.IsNullOrWhiteSpace(noteText))
             {
-                Note note = new Note { Text = noteText, BackGroundColor = ColorTranslator.ToHtml(selectedColor) };
+                Note note = new Note { Text = noteText, 
+                    BackGroundColor = ColorTranslator.ToHtml(selectedBackColor),
+                    TextColor = ColorTranslator.ToHtml(selectedTextColor)};
+
                 notes.Add(note);
                 ListViewItem item = new ListViewItem(note.Text);
-                item.BackColor = selectedColor;
+
+                item.BackColor = selectedBackColor;
+                item.ForeColor = selectedTextColor;
+
                 listViewNotes.Items.Add(item);
                 textBoxNote.Clear();
+
                 textBoxNote.BackColor = Color.White;
-                selectedColor = Color.White;
+                textBoxNote.ForeColor = Color.Black;
+                selectedBackColor = Color.White;
+                selectedTextColor = Color.Black;
             }
         }
 
@@ -94,20 +104,31 @@ namespace NoteTakingApp
                 foreach( var note in notes)
                 {
                     ListViewItem item = new ListViewItem(note.Text);
-                    item.BackColor = note.GetColor(); ;
+                    item.BackColor = note.GetBackgroundColor(); ;
+                    item.ForeColor = note.GetTextColor();
                     listViewNotes.Items.Add(item);
                 }
 
             }
         }
 
-        private void btnPickColor_Click(object sender, EventArgs e)
+        private void btnPickBackColor_Click(object sender, EventArgs e)
         {
             if (colorDialog1.ShowDialog() == DialogResult.OK)
             {
-                selectedColor = colorDialog1.Color;
-                textBoxNote.BackColor = selectedColor;
+                selectedBackColor = colorDialog1.Color;
+                textBoxNote.BackColor = selectedBackColor;
             }
+        }
+
+        private void btnPickTextColor_Click(object sender, EventArgs e)
+        {
+            if (colorDialog1.ShowDialog() == DialogResult.OK)
+            {
+                selectedTextColor = colorDialog1.Color;
+                textBoxNote.ForeColor = selectedTextColor;
+            }
+
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -142,16 +163,23 @@ namespace NoteTakingApp
     {
         public string Text { get; set; }
         public string BackGroundColor { get; set; }
+        public string TextColor { get; set; }
 
         public Note() { }
-        public Note(string text, Color backgroundColor)
+        public Note(string text, Color backgroundColor, Color textColor)
         {
             Text = text;
             BackGroundColor = ColorTranslator.ToHtml(backgroundColor);
+            TextColor = ColorTranslator.ToHtml(textColor);
         }
-        public Color GetColor()
+        public Color GetBackgroundColor()
         {
             return ColorTranslator.FromHtml(BackGroundColor);
+        }
+
+        public Color GetTextColor()
+        {
+            return ColorTranslator.FromHtml(TextColor);
         }
     }
 }
