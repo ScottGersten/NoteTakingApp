@@ -49,52 +49,62 @@
             // 
             // btnAddNote
             // 
+            btnAddNote.BackColor = Color.Blue;
+            btnAddNote.Cursor = Cursors.Hand;
             btnAddNote.Location = new Point(12, 66);
             btnAddNote.Name = "btnAddNote";
             btnAddNote.Size = new Size(75, 62);
             btnAddNote.TabIndex = 2;
             btnAddNote.Text = "Add Note";
-            btnAddNote.UseVisualStyleBackColor = true;
+            btnAddNote.UseVisualStyleBackColor = false;
             btnAddNote.Click += btnAddNote_Click;
             // 
             // btnDeleteNote
             // 
+            btnDeleteNote.BackColor = Color.Red;
+            btnDeleteNote.Cursor = Cursors.Hand;
             btnDeleteNote.Location = new Point(12, 134);
             btnDeleteNote.Name = "btnDeleteNote";
             btnDeleteNote.Size = new Size(75, 58);
             btnDeleteNote.TabIndex = 3;
             btnDeleteNote.Text = "Delete Note";
-            btnDeleteNote.UseVisualStyleBackColor = true;
+            btnDeleteNote.UseVisualStyleBackColor = false;
             btnDeleteNote.Click += btnDeleteNote_Click;
             // 
             // btnSaveNotes
             // 
+            btnSaveNotes.BackColor = Color.Green;
+            btnSaveNotes.Cursor = Cursors.Hand;
             btnSaveNotes.Location = new Point(12, 198);
             btnSaveNotes.Name = "btnSaveNotes";
             btnSaveNotes.Size = new Size(75, 60);
             btnSaveNotes.TabIndex = 4;
             btnSaveNotes.Text = "Save Note";
-            btnSaveNotes.UseVisualStyleBackColor = true;
+            btnSaveNotes.UseVisualStyleBackColor = false;
             btnSaveNotes.Click += btnSaveNotes_Click;
             // 
             // btnLoadNotes
             // 
+            btnLoadNotes.BackColor = Color.Yellow;
+            btnLoadNotes.Cursor = Cursors.Hand;
             btnLoadNotes.Location = new Point(12, 264);
             btnLoadNotes.Name = "btnLoadNotes";
             btnLoadNotes.Size = new Size(75, 63);
             btnLoadNotes.TabIndex = 5;
             btnLoadNotes.Text = "Load Note";
-            btnLoadNotes.UseVisualStyleBackColor = true;
+            btnLoadNotes.UseVisualStyleBackColor = false;
             btnLoadNotes.Click += btnLoadNotes_Click;
             // 
             // btnPickBackColor
             // 
+            btnPickBackColor.BackColor = SystemColors.Info;
+            btnPickBackColor.Cursor = Cursors.Hand;
             btnPickBackColor.Location = new Point(577, 240);
             btnPickBackColor.Name = "btnPickBackColor";
             btnPickBackColor.Size = new Size(88, 68);
             btnPickBackColor.TabIndex = 6;
             btnPickBackColor.Text = "Pick Background Color";
-            btnPickBackColor.UseVisualStyleBackColor = true;
+            btnPickBackColor.UseVisualStyleBackColor = false;
             btnPickBackColor.Click += btnPickBackColor_Click;
             // 
             // listViewNotes
@@ -108,12 +118,14 @@
             // 
             // btnPickTextColor
             // 
+            btnPickTextColor.BackColor = SystemColors.Info;
+            btnPickTextColor.Cursor = Cursors.Hand;
             btnPickTextColor.Location = new Point(577, 134);
             btnPickTextColor.Name = "btnPickTextColor";
             btnPickTextColor.Size = new Size(88, 63);
             btnPickTextColor.TabIndex = 8;
             btnPickTextColor.Text = "Pick Text Color";
-            btnPickTextColor.UseVisualStyleBackColor = true;
+            btnPickTextColor.UseVisualStyleBackColor = false;
             btnPickTextColor.Click += btnPickTextColor_Click;
             // 
             // Form1
