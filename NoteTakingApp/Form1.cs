@@ -131,6 +131,29 @@ namespace NoteTakingApp
 
         }
 
+        private void btnViewNote_Click(object sender, EventArgs e)
+        {
+            if (listViewNotes.SelectedItems.Count > 0)
+            {
+                int index = listViewNotes.SelectedItems[0].Index;
+                Note selectedNote = notes[index];
+                using (NoteEditorForm editor = new NoteEditorForm(selectedNote.Text, selectedNote.GetBackgroundColor(), selectedNote.GetTextColor()))
+                {
+                    if (editor.ShowDialog() == DialogResult.OK)
+                    {
+                        selectedNote.Text = editor.NoteText;
+                        selectedNote.BackGroundColor = ColorTranslator.ToHtml(editor.NoteBackgroundColor);
+                        selectedNote.TextColor = ColorTranslator.ToHtml(editor.NoteTextColor);
+
+                        ListViewItem item = listViewNotes.Items[index];
+                        item.Text = selectedNote.Text;
+                        item.BackColor = selectedNote.GetBackgroundColor();
+                        item.ForeColor = selectedNote.GetTextColor();
+                    }
+                }
+            }
+        }
+
         private void Form1_Load(object sender, EventArgs e)
         {
 

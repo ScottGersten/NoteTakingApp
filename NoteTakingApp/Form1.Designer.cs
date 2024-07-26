@@ -37,6 +37,7 @@
             colorDialog1 = new ColorDialog();
             listViewNotes = new ListView();
             btnPickTextColor = new Button();
+            btnViewNote = new Button();
             SuspendLayout();
             // 
             // textBoxNote
@@ -49,7 +50,7 @@
             // 
             // btnAddNote
             // 
-            btnAddNote.BackColor = Color.Blue;
+            btnAddNote.BackColor = SystemColors.ActiveCaption;
             btnAddNote.Cursor = Cursors.Hand;
             btnAddNote.Location = new Point(12, 66);
             btnAddNote.Name = "btnAddNote";
@@ -61,7 +62,7 @@
             // 
             // btnDeleteNote
             // 
-            btnDeleteNote.BackColor = Color.Red;
+            btnDeleteNote.BackColor = SystemColors.ActiveCaption;
             btnDeleteNote.Cursor = Cursors.Hand;
             btnDeleteNote.Location = new Point(12, 134);
             btnDeleteNote.Name = "btnDeleteNote";
@@ -73,7 +74,7 @@
             // 
             // btnSaveNotes
             // 
-            btnSaveNotes.BackColor = Color.Green;
+            btnSaveNotes.BackColor = SystemColors.HotTrack;
             btnSaveNotes.Cursor = Cursors.Hand;
             btnSaveNotes.Location = new Point(12, 198);
             btnSaveNotes.Name = "btnSaveNotes";
@@ -85,7 +86,7 @@
             // 
             // btnLoadNotes
             // 
-            btnLoadNotes.BackColor = Color.Yellow;
+            btnLoadNotes.BackColor = SystemColors.HotTrack;
             btnLoadNotes.Cursor = Cursors.Hand;
             btnLoadNotes.Location = new Point(12, 264);
             btnLoadNotes.Name = "btnLoadNotes";
@@ -128,11 +129,24 @@
             btnPickTextColor.UseVisualStyleBackColor = false;
             btnPickTextColor.Click += btnPickTextColor_Click;
             // 
+            // btnViewNote
+            // 
+            btnViewNote.BackColor = SystemColors.WindowFrame;
+            btnViewNote.Cursor = Cursors.Hand;
+            btnViewNote.Location = new Point(275, 344);
+            btnViewNote.Name = "btnViewNote";
+            btnViewNote.Size = new Size(75, 65);
+            btnViewNote.TabIndex = 9;
+            btnViewNote.Text = "View Note";
+            btnViewNote.UseVisualStyleBackColor = false;
+            btnViewNote.Click += btnViewNote_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(705, 450);
+            Controls.Add(btnViewNote);
             Controls.Add(btnPickTextColor);
             Controls.Add(listViewNotes);
             Controls.Add(btnPickBackColor);
@@ -164,5 +178,6 @@
         private ColorDialog colorDialog1;
         private ListView listViewNotes;
         private Button btnPickTextColor;
+        private Button btnViewNote;
     }
 }
