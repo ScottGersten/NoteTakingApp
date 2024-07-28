@@ -12,21 +12,26 @@ namespace NoteTakingApp
 {
     public partial class NoteEditorForm : Form
     {
+        public string NoteTitle { get; private set; }
         public string NoteText { get; private set; }
         public Color NoteBackgroundColor { get; private set; }
         public Color NoteTextColor { get; private set; }
-        public NoteEditorForm(string noteText, Color backgroundColor, Color textColor)
+        public NoteEditorForm(string title, string text, Color backgroundColor, Color textColor)
         {
             InitializeComponent();
-            textBoxNoteEditor.Text = noteText;
-            textBoxNoteEditor.BackColor = backgroundColor;
-            textBoxNoteEditor.ForeColor = textColor;
+            NoteTitle = title;
+            NoteText = text;
             NoteBackgroundColor = backgroundColor;
             NoteTextColor = textColor;
+            textBoxTitleEditor.Text = title;
+            textBoxNoteEditor.Text = text;
+            textBoxNoteEditor.BackColor = backgroundColor;
+            textBoxNoteEditor.ForeColor = textColor;
         }
 
         private void btnSave_Click(object sender, EventArgs e)
         {
+            NoteTitle = textBoxTitleEditor.Text;
             NoteText = textBoxNoteEditor.Text;
             NoteBackgroundColor = textBoxNoteEditor.BackColor;
             NoteTextColor = textBoxNoteEditor.ForeColor;
@@ -38,6 +43,24 @@ namespace NoteTakingApp
         {
             DialogResult = DialogResult.Cancel;
             Close();
+        }
+
+        private void btnPickBackgroundColor_Click(object sender, EventArgs e)
+        {
+            if (colorDialog1.ShowDialog() == DialogResult.OK)
+            {
+                NoteBackgroundColor = colorDialog1.Color;
+                textBoxNoteEditor.BackColor = NoteBackgroundColor;
+            }
+        }
+
+        private void btnPickTextColor_Click(object sender, EventArgs e)
+        {
+            if (colorDialog1.ShowDialog() == DialogResult.OK)
+            {
+                NoteTextColor = colorDialog1.Color;
+                textBoxNoteEditor.ForeColor = NoteTextColor;
+            }
         }
     }
 }

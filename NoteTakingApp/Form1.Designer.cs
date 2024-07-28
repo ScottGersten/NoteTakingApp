@@ -38,23 +38,29 @@
             listViewNotes = new ListView();
             btnPickTextColor = new Button();
             btnViewNote = new Button();
+            textBoxTitle = new TextBox();
             SuspendLayout();
             // 
             // textBoxNote
             // 
-            textBoxNote.Location = new Point(148, 66);
+            textBoxNote.AcceptsReturn = true;
+            textBoxNote.AcceptsTab = true;
+            textBoxNote.AllowDrop = true;
+            textBoxNote.Location = new Point(211, 90);
+            textBoxNote.Margin = new Padding(4, 5, 4, 5);
             textBoxNote.Multiline = true;
             textBoxNote.Name = "textBoxNote";
-            textBoxNote.Size = new Size(354, 34);
+            textBoxNote.Size = new Size(504, 356);
             textBoxNote.TabIndex = 0;
             // 
             // btnAddNote
             // 
             btnAddNote.BackColor = SystemColors.ActiveCaption;
             btnAddNote.Cursor = Cursors.Hand;
-            btnAddNote.Location = new Point(12, 66);
+            btnAddNote.Location = new Point(17, 110);
+            btnAddNote.Margin = new Padding(4, 5, 4, 5);
             btnAddNote.Name = "btnAddNote";
-            btnAddNote.Size = new Size(75, 62);
+            btnAddNote.Size = new Size(107, 103);
             btnAddNote.TabIndex = 2;
             btnAddNote.Text = "Add Note";
             btnAddNote.UseVisualStyleBackColor = false;
@@ -64,9 +70,10 @@
             // 
             btnDeleteNote.BackColor = SystemColors.ActiveCaption;
             btnDeleteNote.Cursor = Cursors.Hand;
-            btnDeleteNote.Location = new Point(12, 134);
+            btnDeleteNote.Location = new Point(17, 223);
+            btnDeleteNote.Margin = new Padding(4, 5, 4, 5);
             btnDeleteNote.Name = "btnDeleteNote";
-            btnDeleteNote.Size = new Size(75, 58);
+            btnDeleteNote.Size = new Size(107, 97);
             btnDeleteNote.TabIndex = 3;
             btnDeleteNote.Text = "Delete Note";
             btnDeleteNote.UseVisualStyleBackColor = false;
@@ -76,9 +83,10 @@
             // 
             btnSaveNotes.BackColor = SystemColors.HotTrack;
             btnSaveNotes.Cursor = Cursors.Hand;
-            btnSaveNotes.Location = new Point(12, 198);
+            btnSaveNotes.Location = new Point(17, 330);
+            btnSaveNotes.Margin = new Padding(4, 5, 4, 5);
             btnSaveNotes.Name = "btnSaveNotes";
-            btnSaveNotes.Size = new Size(75, 60);
+            btnSaveNotes.Size = new Size(107, 100);
             btnSaveNotes.TabIndex = 4;
             btnSaveNotes.Text = "Save Note";
             btnSaveNotes.UseVisualStyleBackColor = false;
@@ -88,9 +96,10 @@
             // 
             btnLoadNotes.BackColor = SystemColors.HotTrack;
             btnLoadNotes.Cursor = Cursors.Hand;
-            btnLoadNotes.Location = new Point(12, 264);
+            btnLoadNotes.Location = new Point(17, 440);
+            btnLoadNotes.Margin = new Padding(4, 5, 4, 5);
             btnLoadNotes.Name = "btnLoadNotes";
-            btnLoadNotes.Size = new Size(75, 63);
+            btnLoadNotes.Size = new Size(107, 105);
             btnLoadNotes.TabIndex = 5;
             btnLoadNotes.Text = "Load Note";
             btnLoadNotes.UseVisualStyleBackColor = false;
@@ -100,9 +109,10 @@
             // 
             btnPickBackColor.BackColor = SystemColors.Info;
             btnPickBackColor.Cursor = Cursors.Hand;
-            btnPickBackColor.Location = new Point(577, 240);
+            btnPickBackColor.Location = new Point(824, 400);
+            btnPickBackColor.Margin = new Padding(4, 5, 4, 5);
             btnPickBackColor.Name = "btnPickBackColor";
-            btnPickBackColor.Size = new Size(88, 68);
+            btnPickBackColor.Size = new Size(126, 113);
             btnPickBackColor.TabIndex = 6;
             btnPickBackColor.Text = "Pick Background Color";
             btnPickBackColor.UseVisualStyleBackColor = false;
@@ -110,10 +120,11 @@
             // 
             // listViewNotes
             // 
-            listViewNotes.Location = new Point(148, 134);
+            listViewNotes.Location = new Point(211, 488);
+            listViewNotes.Margin = new Padding(4, 5, 4, 5);
             listViewNotes.MultiSelect = false;
             listViewNotes.Name = "listViewNotes";
-            listViewNotes.Size = new Size(354, 193);
+            listViewNotes.Size = new Size(504, 172);
             listViewNotes.TabIndex = 7;
             listViewNotes.UseCompatibleStateImageBehavior = false;
             // 
@@ -121,9 +132,10 @@
             // 
             btnPickTextColor.BackColor = SystemColors.Info;
             btnPickTextColor.Cursor = Cursors.Hand;
-            btnPickTextColor.Location = new Point(577, 134);
+            btnPickTextColor.Location = new Point(824, 223);
+            btnPickTextColor.Margin = new Padding(4, 5, 4, 5);
             btnPickTextColor.Name = "btnPickTextColor";
-            btnPickTextColor.Size = new Size(88, 63);
+            btnPickTextColor.Size = new Size(126, 105);
             btnPickTextColor.TabIndex = 8;
             btnPickTextColor.Text = "Pick Text Color";
             btnPickTextColor.UseVisualStyleBackColor = false;
@@ -133,19 +145,29 @@
             // 
             btnViewNote.BackColor = SystemColors.WindowFrame;
             btnViewNote.Cursor = Cursors.Hand;
-            btnViewNote.Location = new Point(275, 344);
+            btnViewNote.Location = new Point(17, 555);
+            btnViewNote.Margin = new Padding(4, 5, 4, 5);
             btnViewNote.Name = "btnViewNote";
-            btnViewNote.Size = new Size(75, 65);
+            btnViewNote.Size = new Size(107, 108);
             btnViewNote.TabIndex = 9;
             btnViewNote.Text = "View Note";
             btnViewNote.UseVisualStyleBackColor = false;
             btnViewNote.Click += btnViewNote_Click;
             // 
+            // textBoxTitle
+            // 
+            textBoxTitle.Location = new Point(211, 20);
+            textBoxTitle.Margin = new Padding(4, 5, 4, 5);
+            textBoxTitle.Name = "textBoxTitle";
+            textBoxTitle.Size = new Size(504, 31);
+            textBoxTitle.TabIndex = 10;
+            // 
             // Form1
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(705, 450);
+            ClientSize = new Size(1007, 750);
+            Controls.Add(textBoxTitle);
             Controls.Add(btnViewNote);
             Controls.Add(btnPickTextColor);
             Controls.Add(listViewNotes);
@@ -155,6 +177,7 @@
             Controls.Add(btnDeleteNote);
             Controls.Add(btnAddNote);
             Controls.Add(textBoxNote);
+            Margin = new Padding(4, 5, 4, 5);
             Name = "Form1";
             Text = "Form1";
             Load += Form1_Load;
@@ -179,5 +202,6 @@
         private ListView listViewNotes;
         private Button btnPickTextColor;
         private Button btnViewNote;
+        private TextBox textBoxTitle;
     }
 }
