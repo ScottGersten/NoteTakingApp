@@ -3,9 +3,12 @@
     partial class NoteEditorForm
     {
         private System.ComponentModel.IContainer components = null;
+        private System.Windows.Forms.TextBox textBoxTitleEditor;
         private System.Windows.Forms.TextBox textBoxNoteEditor;
         private System.Windows.Forms.Button btnSave;
         private System.Windows.Forms.Button btnCancel;
+        private System.Windows.Forms.Button btnPickBackgroundColor;
+        private System.Windows.Forms.Button btnPickTextColor;
 
         protected override void Dispose(bool disposing)
         {
@@ -18,51 +21,88 @@
 
         private void InitializeComponent()
         {
-            this.textBoxNoteEditor = new System.Windows.Forms.TextBox();
-            this.btnSave = new System.Windows.Forms.Button();
-            this.btnCancel = new System.Windows.Forms.Button();
-            this.SuspendLayout();
+            textBoxNoteEditor = new TextBox();
+            textBoxTitleEditor = new TextBox();
+            btnSave = new Button();
+            btnCancel = new Button();
+            btnPickBackgroundColor = new Button();
+            btnPickTextColor = new Button();
+            colorDialog1 = new ColorDialog();
+            SuspendLayout();
             // 
             // textBoxNoteEditor
             // 
-            this.textBoxNoteEditor.Location = new System.Drawing.Point(12, 12);
-            this.textBoxNoteEditor.Multiline = true;
-            this.textBoxNoteEditor.Name = "textBoxNoteEditor";
-            this.textBoxNoteEditor.Size = new System.Drawing.Size(260, 180);
-            this.textBoxNoteEditor.TabIndex = 0;
+            textBoxNoteEditor.Location = new Point(20, 23);
+            textBoxNoteEditor.Margin = new Padding(6, 5, 6, 5);
+            textBoxNoteEditor.Multiline = true;
+            textBoxNoteEditor.Name = "textBoxNoteEditor";
+            textBoxNoteEditor.Size = new Size(431, 342);
+            textBoxNoteEditor.TabIndex = 0;
+            // 
+            // textBoxTitleEditor
+            // 
+            textBoxTitleEditor.Location = new Point(12, 12);
+            textBoxTitleEditor.Name = "textBoxTitleEditor";
+            textBoxTitleEditor.Size = new Size(260, 31);
+            textBoxTitleEditor.TabIndex = 3;
             // 
             // btnSave
             // 
-            this.btnSave.Location = new System.Drawing.Point(12, 198);
-            this.btnSave.Name = "btnSave";
-            this.btnSave.Size = new System.Drawing.Size(75, 23);
-            this.btnSave.TabIndex = 1;
-            this.btnSave.Text = "Save";
-            this.btnSave.UseVisualStyleBackColor = true;
-            this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
+            btnSave.Location = new Point(20, 380);
+            btnSave.Margin = new Padding(6, 5, 6, 5);
+            btnSave.Name = "btnSave";
+            btnSave.Size = new Size(126, 45);
+            btnSave.TabIndex = 1;
+            btnSave.Text = "Save";
+            btnSave.UseVisualStyleBackColor = true;
+            btnSave.Click += btnSave_Click;
             // 
             // btnCancel
             // 
-            this.btnCancel.Location = new System.Drawing.Point(197, 198);
-            this.btnCancel.Name = "btnCancel";
-            this.btnCancel.Size = new System.Drawing.Size(75, 23);
-            this.btnCancel.TabIndex = 2;
-            this.btnCancel.Text = "Cancel";
-            this.btnCancel.UseVisualStyleBackColor = true;
-            this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
+            btnCancel.Location = new Point(329, 380);
+            btnCancel.Margin = new Padding(6, 5, 6, 5);
+            btnCancel.Name = "btnCancel";
+            btnCancel.Size = new Size(126, 45);
+            btnCancel.TabIndex = 2;
+            btnCancel.Text = "Cancel";
+            btnCancel.UseVisualStyleBackColor = true;
+            btnCancel.Click += btnCancel_Click;
+            // 
+            // btnPickBackgroundColor
+            // 
+            btnPickBackgroundColor.Location = new Point(12, 38);
+            btnPickBackgroundColor.Name = "btnPickBackgroundColor";
+            btnPickBackgroundColor.Size = new Size(130, 23);
+            btnPickBackgroundColor.TabIndex = 4;
+            btnPickBackgroundColor.Text = "Pick Background Color";
+            btnPickBackgroundColor.UseVisualStyleBackColor = true;
+            btnPickBackgroundColor.Click += btnPickBackgroundColor_Click;
+            // 
+            // btnPickTextColor
+            // 
+            btnPickTextColor.Location = new Point(148, 38);
+            btnPickTextColor.Name = "btnPickTextColor";
+            btnPickTextColor.Size = new Size(124, 23);
+            btnPickTextColor.TabIndex = 5;
+            btnPickTextColor.Text = "Pick Text Color";
+            btnPickTextColor.UseVisualStyleBackColor = true;
+            btnPickTextColor.Click += btnPickTextColor_Click;
             // 
             // NoteEditorForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(284, 233);
-            this.Controls.Add(this.btnCancel);
-            this.Controls.Add(this.btnSave);
-            this.Controls.Add(this.textBoxNoteEditor);
-            this.Name = "NoteEditorForm";
-            this.Text = "Edit Note";
-            this.ResumeLayout(false);
-            this.PerformLayout();
+            AutoScaleDimensions = new SizeF(10F, 25F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(473, 448);
+            Controls.Add(btnCancel);
+            Controls.Add(btnSave);
+            Controls.Add(textBoxNoteEditor);
+            Margin = new Padding(6, 5, 6, 5);
+            Name = "NoteEditorForm";
+            Text = "Edit Note";
+            ResumeLayout(false);
+            PerformLayout();
         }
+
+        private ColorDialog colorDialog1;
     }
 }

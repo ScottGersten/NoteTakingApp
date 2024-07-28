@@ -14,7 +14,7 @@ namespace NoteTakingApp
     {
         private List<Note> notes;
         private Color selectedBackColor = Color.White;
-        private Color selectedTextColor = Color.White;
+        private Color selectedTextColor = Color.Black;
         public Form1()
         {
             InitializeComponent();
@@ -23,22 +23,25 @@ namespace NoteTakingApp
 
         private void btnAddNote_Click(object sender, EventArgs e)
         {
+            string noteTitle = textBoxTitle.Text;
             string noteText = textBoxNote.Text;
-            if (!string.IsNullOrWhiteSpace(noteText))
+            if (!string.IsNullOrWhiteSpace(noteText) &&
+                !string.IsNullOrWhiteSpace(noteTitle))
             {
-                Note note = new Note { Text = noteText, 
+                Note note = new Note { Title = noteTitle, 
+                    Text = noteText, 
                     BackGroundColor = ColorTranslator.ToHtml(selectedBackColor),
                     TextColor = ColorTranslator.ToHtml(selectedTextColor)};
 
                 notes.Add(note);
-                ListViewItem item = new ListViewItem(note.Text);
-
+                ListViewItem item = new ListViewItem(note.Title);
                 item.BackColor = selectedBackColor;
                 item.ForeColor = selectedTextColor;
 
                 listViewNotes.Items.Add(item);
-                textBoxNote.Clear();
 
+                textBoxTitle.Clear();
+                textBoxNote.Clear();
                 textBoxNote.BackColor = Color.White;
                 textBoxNote.ForeColor = Color.Black;
                 selectedBackColor = Color.White;
@@ -103,7 +106,7 @@ namespace NoteTakingApp
                 listViewNotes.Items.Clear();
                 foreach( var note in notes)
                 {
-                    ListViewItem item = new ListViewItem(note.Text);
+                    ListViewItem item = new ListViewItem(note.Title);
                     item.BackColor = note.GetBackgroundColor(); ;
                     item.ForeColor = note.GetTextColor();
                     listViewNotes.Items.Add(item);
@@ -118,6 +121,7 @@ namespace NoteTakingApp
             {
                 selectedBackColor = colorDialog1.Color;
                 textBoxNote.BackColor = selectedBackColor;
+                textBoxTitle.BackColor = selectedBackColor;
             }
         }
 
@@ -127,6 +131,7 @@ namespace NoteTakingApp
             {
                 selectedTextColor = colorDialog1.Color;
                 textBoxNote.ForeColor = selectedTextColor;
+                textBoxTitle.ForeColor = selectedTextColor;
             }
 
         }
@@ -137,16 +142,17 @@ namespace NoteTakingApp
             {
                 int index = listViewNotes.SelectedItems[0].Index;
                 Note selectedNote = notes[index];
-                using (NoteEditorForm editor = new NoteEditorForm(selectedNote.Text, selectedNote.GetBackgroundColor(), selectedNote.GetTextColor()))
+                using (NoteEditorForm editor = new NoteEditorForm(selectedNote.Title, selectedNote.Text, selectedNote.GetBackgroundColor(), selectedNote.GetTextColor()))
                 {
                     if (editor.ShowDialog() == DialogResult.OK)
                     {
+                        selectedNote.Title = editor.NoteTitle;
                         selectedNote.Text = editor.NoteText;
                         selectedNote.BackGroundColor = ColorTranslator.ToHtml(editor.NoteBackgroundColor);
                         selectedNote.TextColor = ColorTranslator.ToHtml(editor.NoteTextColor);
 
                         ListViewItem item = listViewNotes.Items[index];
-                        item.Text = selectedNote.Text;
+                        item.Text = selectedNote.Title;
                         item.BackColor = selectedNote.GetBackgroundColor();
                         item.ForeColor = selectedNote.GetTextColor();
                     }
@@ -184,13 +190,15 @@ namespace NoteTakingApp
     [Serializable]
     public class Note
     {
+        public string Title { get; set; }
         public string Text { get; set; }
         public string BackGroundColor { get; set; }
         public string TextColor { get; set; }
 
         public Note() { }
-        public Note(string text, Color backgroundColor, Color textColor)
+        public Note(string title, string text, Color backgroundColor, Color textColor)
         {
+            Title = title;
             Text = text;
             BackGroundColor = ColorTranslator.ToHtml(backgroundColor);
             TextColor = ColorTranslator.ToHtml(textColor);
