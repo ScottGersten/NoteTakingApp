@@ -181,8 +181,15 @@
             Name = "Form1";
             Text = "Form1";
             Load += Form1_Load;
+            FormClosing += Form1_FormClosing;
             ResumeLayout(false);
             PerformLayout();
+        }
+
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            //throw new NotImplementedException();
+            SaveNotesToFile();
         }
 
         private void BtnPickTextColor_Click(object sender, EventArgs e)

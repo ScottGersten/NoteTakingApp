@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Windows.Forms;
+using System.Xml.Serialization;
 
 namespace NoteTakingApp
 {
@@ -15,6 +16,7 @@ namespace NoteTakingApp
         private List<Note> notes;
         private Color selectedBackColor = Color.White;
         private Color selectedTextColor = Color.Black;
+        private const string NotesFilePath = "notes.json";
         public Form1()
         {
             InitializeComponent();
@@ -162,7 +164,38 @@ namespace NoteTakingApp
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            LoadNotesFromFile();
+        }
 
+        private void LoadNotesFromFile()
+        {
+            if (File.Exists(NotesFilePath))
+            {
+                string json = File.ReadAllText(NotesFilePath);
+                notes = JsonSerializer.Deserialize<List<Note>>(json);
+                PopulateListView();
+            }
+        }
+
+        private void PopulateListView()
+        {
+            listViewNotes.Items.Clear();
+            foreach (var note in notes)
+            {
+                ListViewItem item = new ListViewItem(note.Title)
+                {
+                    BackColor = note.GetBackgroundColor(),
+                    ForeColor = note.GetTextColor()
+                };
+                listViewNotes.Items.Add(item);
+
+            }
+        }
+
+        private void SaveNotesToFile()
+        {
+            string json = JsonSerializer.Serialize(notes, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(NotesFilePath, json);
         }
 
         private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
