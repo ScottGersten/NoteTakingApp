@@ -16,11 +16,12 @@ namespace NoteTakingApp
         private List<Note> notes;
         private Color selectedBackColor = Color.White;
         private Color selectedTextColor = Color.Black;
-        private const string NotesFilePath = "notes.json";
+        private string NotesFilePath;
         public Form1()
         {
             InitializeComponent();
             notes = new List<Note>();
+            NotesFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "notes.json");
         }
 
         private void btnAddNote_Click(object sender, EventArgs e)
