@@ -14,8 +14,8 @@ namespace NoteTakingApp
     public partial class Form1 : Form
     {
         private List<Note> notes;
-        private Color selectedBackColor = Color.White;
-        private Color selectedTextColor = Color.Black;
+        //private Color selectedBackColor = Color.White;
+        //private Color selectedTextColor = Color.Black;
         private string NotesFilePath;
         public Form1()
         {
@@ -26,7 +26,7 @@ namespace NoteTakingApp
 
         private void btnAddNote_Click(object sender, EventArgs e)
         {
-            string noteTitle = textBoxTitle.Text;
+            /*string noteTitle = textBoxTitle.Text;
             string noteText = textBoxNote.Text;
             if (!string.IsNullOrWhiteSpace(noteText) &&
                 !string.IsNullOrWhiteSpace(noteTitle))
@@ -49,6 +49,20 @@ namespace NoteTakingApp
                 textBoxNote.ForeColor = Color.Black;
                 selectedBackColor = Color.White;
                 selectedTextColor = Color.Black;
+            }*/
+            using (AddNoteForm addNoteForm = new AddNoteForm())
+            {
+                if (addNoteForm.ShowDialog() == DialogResult.OK)
+                {
+                    Note newNote = addNoteForm.NewNote;
+                    notes.Add(newNote);
+                    ListViewItem item = new ListViewItem(newNote.Title)
+                    {
+                        BackColor = newNote.GetBackgroundColor(),
+                        ForeColor = newNote.GetTextColor()
+                    };
+                    listViewNotes.Items.Add(item);
+                }
             }
         }
 
@@ -118,7 +132,7 @@ namespace NoteTakingApp
             }
         }
 
-        private void btnPickBackColor_Click(object sender, EventArgs e)
+        /*private void btnPickBackColor_Click(object sender, EventArgs e)
         {
             if (colorDialog1.ShowDialog() == DialogResult.OK)
             {
@@ -126,9 +140,9 @@ namespace NoteTakingApp
                 textBoxNote.BackColor = selectedBackColor;
                 textBoxTitle.BackColor = selectedBackColor;
             }
-        }
+        }*/
 
-        private void btnPickTextColor_Click(object sender, EventArgs e)
+        /*private void btnPickTextColor_Click(object sender, EventArgs e)
         {
             if (colorDialog1.ShowDialog() == DialogResult.OK)
             {
@@ -137,7 +151,7 @@ namespace NoteTakingApp
                 textBoxTitle.ForeColor = selectedTextColor;
             }
 
-        }
+        }*/
 
         private void btnViewNote_Click(object sender, EventArgs e)
         {
@@ -166,7 +180,7 @@ namespace NoteTakingApp
         private void Form1_Load(object sender, EventArgs e)
         {
             LoadNotesFromFile();
-            textBoxTitle.Focus();
+            //textBoxTitle.Focus();
         }
 
         private void LoadNotesFromFile()
