@@ -9,7 +9,32 @@ public partial class MainPage : ContentPage
         InitializeComponent();
     }
 
-    private void OnCounterClicked(object sender, EventArgs e)
+    private void TitleEditor_TextChanged(object sender, TextChangedEventArgs e)
+    {
+
+    }
+
+    private void NoteEditor_TextChanged(object sender, TextChangedEventArgs e)
+    {
+
+    }
+
+    private void AddNoteButton_Clicked(object sender, EventArgs e)
+    {
+
+    }
+
+    private void ClearNoteButton_Clicked(object sender, EventArgs e)
+    {
+
+    }
+
+    private void DeleteNoteButton_Clicked(object sender, EventArgs e)
+    {
+
+    }
+
+    /*private void OnCounterClicked(object sender, EventArgs e)
     {
         count++;
 
@@ -23,10 +48,10 @@ public partial class MainPage : ContentPage
 
     private async void MyButtonClicked(object sender, EventArgs e)
     {
-        /*var client = new HttpClient();
+        *//*var client = new HttpClient();
         var result = await client.GetStringAsync("google.com");
         File.WriteAllText("text.txt",result);
-        await File.WriteAllTextAsync("text.txt", result);*/
+        await File.WriteAllTextAsync("text.txt", result);*//*
 
         if (!string.IsNullOrEmpty(NoteText.Text))
         {
@@ -46,5 +71,5 @@ public partial class MainPage : ContentPage
     private void NoteText_TextChanged(object sender, TextChangedEventArgs e)
     {
         WatermarkLabel.IsVisible = string.IsNullOrEmpty(NoteText.Text);
-    }
+    }*/
 }
