@@ -9,9 +9,11 @@
 
         <VerticalStackLayout Spacing="10"
                              Padding="5"
-                             Grid.Row="1"
+                             Grid.Row="0"
                              Grid.Column="0"
-                             BackgroundColor="Grey">
+                             Grid.RowSpan="2"
+                             BackgroundColor="Azure"
+                             VerticalOptions="Center">
             <Button x:Name="AddNoteButton"
                     Text="Add Note"
                     Clicked="AddNoteButton_Clicked"
@@ -19,11 +21,11 @@
                     FontAttributes="Bold"
                     Background="Transparent"
                     BorderColor="Green"
-                    BorderWidth="5"/>
+                    BorderWidth="5" />
 
             <Button x:Name="ClearNoteButton"
                     Text="Clear Note"
-                    Clicked="ClearNoteButton_Clicked" 
+                    Clicked="ClearNoteButton_Clicked"
                     TextColor="Orange"
                     FontAttributes="Bold"
                     Background="Transparent"
@@ -32,7 +34,7 @@
 
             <Button x:Name="DeleteNoteButton"
                     Text="Delete Note"
-                    Clicked="DeleteNoteButton_Clicked" 
+                    Clicked="DeleteNoteButton_Clicked"
                     TextColor="Red"
                     FontAttributes="Bold"
                     Background="Transparent"
@@ -67,7 +69,32 @@
                 TextColor="{StaticResource PrimaryDarkText}"/>
 
 
-        <CollectionView>
+        <CollectionView x:Name="NotesCollectionView"
+                        SelectionChanged="NotesCollectionView_SelectionChanged"
+                        SelectionMode="Single"
+                        Grid.Row="0"
+                        Grid.Column="2"
+                        Grid.RowSpan="2"
+                        BackgroundColor="BurlyWood">
+            <CollectionView.Header>
+                <Border BackgroundColor="{StaticResource Primary}"
+                        Padding="10">
+                    <Label Text="Your Notes"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource Secondary}"
+                           HorizontalOptions="Center"/>
+
+                </Border>
+            </CollectionView.Header>
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:HistoryItem">
+                    <VerticalStackLayout Padding="10">
+                        <Label Text="{Binding Title}"
+                               FontAttributes="Bold"/>
+                    </VerticalStackLayout>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
             
         </CollectionView>
 

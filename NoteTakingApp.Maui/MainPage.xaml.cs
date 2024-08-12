@@ -34,6 +34,11 @@ public partial class MainPage : ContentPage
 
     }
 
+    private void NotesCollectionView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+
+    }
+
     /*private void OnCounterClicked(object sender, EventArgs e)
     {
         count++;
