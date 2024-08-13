@@ -17,12 +17,28 @@ public partial class MainPage : ContentPage
 
     private void TitleEditor_TextChanged(object sender, TextChangedEventArgs e)
     {
+        if(!string.IsNullOrEmpty(TitleEditor.Text))
+        {
+            TitleLabel.Text = string.Empty;
+        }
+        else
+        {
+            TitleLabel.Text = "Enter Note Title Here...";
+        }
         
 
     }
 
     private void NoteEditor_TextChanged(object sender, TextChangedEventArgs e)
     {
+        if (!string.IsNullOrEmpty(NoteEditor.Text))
+        {
+            NoteLabel.Text = string.Empty;
+        }
+        else
+        {
+            NoteLabel.Text = "Enter Note Here...";
+        }
 
     }
 
@@ -48,11 +64,18 @@ public partial class MainPage : ContentPage
 
     private void ClearNoteButton_Clicked(object sender, EventArgs e)
     {
+        TitleEditor.Text = string.Empty;
+        NoteEditor.Text = string.Empty;
 
     }
 
     private void DeleteNoteButton_Clicked(object sender, EventArgs e)
     {
+        if (NotesCollectionView.SelectedItem != null)
+        {
+            Note note = (Note)NotesCollectionView.SelectedItem;
+            notes.Remove(note);
+        }
 
     }
 
@@ -61,5 +84,8 @@ public partial class MainPage : ContentPage
 
     }
 
-    
+    private void ViewNoteButton_Clicked(object sender, EventArgs e)
+    {
+
+    }
 }
