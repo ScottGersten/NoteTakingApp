@@ -77,6 +77,11 @@ public partial class MainPage : ContentPage
             notes.Remove(note);
         }
 
+        else
+        {
+            DisplayAlert("Error", "Please select a note to delete", "OK");
+        }
+
     }
 
     private void NotesCollectionView_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -86,6 +91,15 @@ public partial class MainPage : ContentPage
 
     private void ViewNoteButton_Clicked(object sender, EventArgs e)
     {
+        if(NotesCollectionView.SelectedItem is Note note)
+        {
+            TitleEditor.Text = note.Title;
+            NoteEditor.Text = note.Text;
+        }
+        else
+        {
+            DisplayAlert("Error", "Please select a note to view", "OK");
+        }
 
     }
 }
