@@ -12,9 +12,8 @@ on:
 
 env:
   PROJECT_PATH: "NoteTakingApp.Maui/NoteTakingApp.Maui.csproj"
-  #NUGETCONFIG_PATH: "src/NuGet.Config"
-  #TELERIK_USERNAME: ${{ secrets.MyTelerikAccountUsername }} # used by the NuGet.Config file
-  #TELERIK_PASSWORD: ${{ secrets.MyTelerikAccountPassword }} # used by the NuGet.Config file
+  TELERIK_NUGET_KEY: ${{secrets.NUGET_KEY}}
+  NUGETCONFIG_PATH: "nuget.config"
 
 jobs:
 
@@ -51,9 +50,9 @@ jobs:
       shell: pwsh
       run: dotnet workload install maui --source https://api.nuget.org/v3/index.json
 
-    # - name: Restore NuGet packages
-    #   shell: pwsh
-    #   run: dotnet restore ${{ env.PROJECT_PATH }} --configfile ${{ env.NUGETCONFIG_PATH }}
+    - name: Restore NuGet packages
+      shell: pwsh
+      run: dotnet restore ${{ env.PROJECT_PATH }} --configfile ${{ env.NUGETCONFIG_PATH }}
 
     - name: Build Maui Android project
       shell: pwsh
@@ -92,9 +91,9 @@ jobs:
       shell: pwsh
       run: dotnet workload install maui --source https://api.nuget.org/v3/index.json
 
-    # - name: Restore NuGet packages
-    #   shell: pwsh
-    #   run: dotnet restore ${{ env.PROJECT_PATH }} --configfile ${{ env.NUGETCONFIG_PATH }}
+    - name: Restore NuGet packages
+      shell: pwsh
+      run: dotnet restore ${{ env.PROJECT_PATH }} --configfile ${{ env.NUGETCONFIG_PATH }}
 
     - name: Build Maui WinUI project
       shell: pwsh
@@ -135,9 +134,9 @@ jobs:
       shell: pwsh
       run: dotnet workload install maui --source https://api.nuget.org/v3/index.json
 
-    # - name: Restore NuGet packages
-    #   shell: bash
-    #   run: dotnet restore ${{ env.PROJECT_PATH }} --configfile ${{ env.NUGETCONFIG_PATH }}
+    - name: Restore NuGet packages
+      shell: bash
+      run: dotnet restore ${{ env.PROJECT_PATH }} --configfile ${{ env.NUGETCONFIG_PATH }}
 
     - name: Build MAUI iOS project
       shell: bash
@@ -178,9 +177,9 @@ jobs:
       shell: pwsh
       run: dotnet workload install maui --source https://api.nuget.org/v3/index.json
 
-    # - name: Restore NuGet packages
-    #   shell: bash
-    #   run: dotnet restore ${{ env.PROJECT_PATH }} --configfile ${{ env.NUGETCONFIG_PATH }}
+    - name: Restore NuGet packages
+      shell: bash
+      run: dotnet restore ${{ env.PROJECT_PATH }} --configfile ${{ env.NUGETCONFIG_PATH }}
     
     - name: Build MAUI MacCatalyst project
       shell: bash
