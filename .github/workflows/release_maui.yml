@@ -150,7 +150,7 @@ jobs:
     - name: SIDELOAD - Build Maui WinUI project
       if: ${{matrix.target_audience}} == 'sideload'
       shell: pwsh
-      run: dotnet publish ${{env.PROJECT_PATH}} -c ${{env.BUILD_CONFIG}} -f "${{env.TFM}}-windows10.0.19041.0" -p:RuntimeIdentifierOverride=win10-x64 -p:PublishTrimmed=False -p:GenerateAppxPackageOnBuild=true -p:AppxPackageSigningEnabled=true -p:EnableMsixTooling=true --self-contained=true -p:PackageCertificateThumbprint=${{secrets.CODESIGN_CERTIFICATE_THUMBPRINT}} -p:PackageCertificateKeyFile="${{steps.save-pfx-file.outputs.filePath}}" -p:PackageCertificatePassword="${{secrets.CODESIGN_CERTIFICATE_PASSWORD}}"
+      run: dotnet publish ${{env.PROJECT_PATH}} -c ${{env.BUILD_CONFIG}} -f "${{env.TFM}}-windows10.0.19041.0" -p:RuntimeIdentifierOverride=win10-x64 -p:PublishTrimmed=False -p:GenerateAppxPackageOnBuild=true -p:AppxPackageSigningEnabled=true -p:EnableMsixTooling=true --self-contained=true -p:PackageCertificateKeyFile="${{steps.save-pfx-file.outputs.filePath}}" -p:PackageCertificatePassword="${{secrets.CODESIGN_CERTIFICATE_PASSWORD}}"
 
     # CODESIGN OPTION 2 - When you get your own Code Signing identity, we can sign the msix file much easier
     # # Login to Azure CLI
