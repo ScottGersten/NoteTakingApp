@@ -27,60 +27,65 @@ env:
   TELERIK_NUGET_KEY: ${{secrets.NUGET_KEY}}
 
 jobs:
-# ***************************** #
-# >>>>>>> Windows Build <<<<<<< #
-# ***************************** #
-  maui-windows:
+# ********************************************** #
+# >>>>>>> Create a common version number <<<<<<< #
+# ********************************************** #
+  generate-version:
+    name: Create App Version Number
     runs-on: windows-2022
-    # Matrix! This is new for you, a matrix lets you run the same job, but in pultiple parallel passes; once for each 'store' or 'sideload' matrix
-    strategy:   
-      matrix:
-        target_audience: [msstore, sideload]
+    outputs:
+      number: ${{steps.version-creator.outputs.APP_VERSION}}
     steps:
-    - name: COMMON - Checkout
+    - name: Generate version number using date and run number
+      id: version-creator
+      shell: pwsh
+      run: |
+        $buildDay = Get-Date -Format "yyyy.Mdd"
+        $ver = $buildDay + "." + $env:GITHUB_RUN_NUMBER + ".0"
+        echo "APP_VERSION=$ver" >> $GITHUB_ENV
+
+
+# ****************************** #
+# >>>>>>> Windows Builds <<<<<<< #
+# ****************************** #
+
+  # ------------------------------- #
+  # 1 - Microsoft Store MSIX build
+  # ------------------------------- #
+  maui-windows-msstore:
+    name: Build Windows MS Store
+    runs-on: windows-2022
+    needs: generate-version
+    steps:
+    - name: Checkout
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
-    - name: COMMON - Setup .NET Core SDK
+    - name: Setup .NET Core SDK
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
 
-    # For WinUI builds
-    - name: COMMON - Add msbuild to PATH
+    # Needed only for WinUI builds
+    - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.3.2    
       
-    # This generates a unique version number using the date and the workflow run number (e.g. 2022.0314.1.0)
-    - name: COMMON - Generate version number using date and run number
-      id: version-creator
-      run: |
-        $buildDay = Get-Date -Format "yyyy.Mdd"
-        $runNumber = "$env:GITHUB_RUN_NUMBER"
-        $ver = $buildDay + "." + $runNumber + ".0"
-        echo "APP_VERSION=$ver" >> $env:GITHUB_OUTPUT
-
     # The hosted runners do not have the maui workload installed by default, so we need to install it
-    - name: COMMON - Install MAUI workloads (required for GitHub-hosted runners)
+    - name: Install MAUI workloads (required for GitHub-hosted runners)
       shell: pwsh
       run: dotnet workload install maui --source https://api.nuget.org/v3/index.json
 
     # Restore NuGet packages ahead of time because we want to use the dedicated nuget.config file
-    - name: COMMON - Restore NuGet packages
+    - name: Restore NuGet packages
       shell: pwsh
       run: dotnet restore ${{env.PROJECT_PATH}} --configfile ${{env.NUGETCONFIG_PATH}}
 
-    # ----------------------------------------------------------- #
-    #               MICROSOFT STORE MATRIX STEPS                  #
-    #           if matrix.target_audience == 'msstore'            #
-    # ----------------------------------------------------------- #
-    
     # Update the manifest for Microsoft Store identity
-    - name: STORE - Update manifest for Microsoft Store build
-      if: ${{matrix.target_audience}} == 'msstore'
+    - name: Update manifest for Microsoft Store build
       run: |
         [xml]$manifest = get-content 'NoteTakingApp.Maui\Platforms\Windows\Package.appxmanifest'
-        $manifest.Package.Identity.Version = "${{steps.version-creator.outputs.APP_VERSION}}"
+        $manifest.Package.Identity.Version = "${{needs.generate-version.outputs.number}}"
         $manifest.Package.Identity.Name = 'scottware.NoteTaker'
         $manifest.Package.Identity.Publisher = 'CN=63DAA465-AC12-4F45-960F-1C6EC865C821'
         $manifest.Package.Properties.DisplayName = 'NoteTake_r'
@@ -89,46 +94,64 @@ jobs:
         $manifest.save("NoteTakingApp.Maui\Platforms\Windows\Package.appxmanifest")
 
     # Compile and publish the WinUI project for the Microsoft Store (no code signing)
-    - name: STORE - Build Maui WinUI project
-      if: ${{matrix.target_audience}} == 'msstore'
+    - name: Build Maui WinUI project
       shell: pwsh
       run: dotnet publish ${{env.PROJECT_PATH}} -c ${{env.BUILD_CONFIG}} -f "${{env.TFM}}-windows10.0.19041.0" -p:RuntimeIdentifierOverride=win10-x64 -p:PublishTrimmed=False -p:GenerateAppxPackageOnBuild=true -p:AppxPackageSigningEnabled=false -p:EnableMsixTooling=true --self-contained=true
     
     # Find the msix file
-    - name: STORE - Locate msix
-      if: ${{matrix.target_audience}} == 'msstore'
-      id: find-store-msix
+    - name: Locate msix
+      id: find-msix-file
       shell: pwsh
       run: |
         $msixPath = Get-ChildItem -Filter NoteTakingApp.Maui*.msix -Recurse | %{$_.FullName}
         echo "PACKAGE_PATH=$msixPath" >> $env:GITHUB_OUTPUT
 
     # Attaching the msix files to the GitHub artifacts for each build (this is not a GitHub release)
-    - name: STORE - Attach artifacts
-      if: ${{matrix.target_audience}} == 'msstore'
+    - name: Attach artifacts
       uses: actions/upload-artifact@v4
       with:     
-        name: "STORE_NoteTakingApp.Maui_v${{steps.version-creator.outputs.APP_VERSION}}.msix" 
-        path: ${{steps.find-store-msix.outputs.PACKAGE_PATH}}
+        name: "STORE_NoteTakingApp.Maui_v${{needs.generate-version.outputs.number}}.msix" 
+        path: ${{steps.find-msix-file.outputs.PACKAGE_PATH}}
         if-no-files-found: error
         retention-days: 30
 
-    - name: STORE - Cleanup build artifacts
-      if: ${{matrix.target_audience}} == 'msstore'
-      shell: pwsh
-      run: Remove-Item * -Include *.msix -Recurse -Force
+  # ------------------------------- #
+  # 2 - Windows Sideload MSIX build
+  # ------------------------------- #
+  maui-windows-sideload:
+    name: Build Windows Sideload
+    runs-on: windows-2022
+    needs: generate-version
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
-    # ----------------------------------------------------------- #
-    #                   SIDELOAD MATRIX STEPS                     #
-    #           if matrix.target_audience == 'sideload'           #
-    # ----------------------------------------------------------- #
+    - name: Setup .NET Core SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    # Needed only for WinUI builds
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.3.2
+
+    # The hosted runners do not have the maui workload installed by default, so we need to install it
+    - name: Install MAUI workloads (required for GitHub-hosted runners)
+      shell: pwsh
+      run: dotnet workload install maui --source https://api.nuget.org/v3/index.json
+
+    # Restore NuGet packages ahead of time because we want to use the dedicated nuget.config file
+    - name: Restore NuGet packages
+      shell: pwsh
+      run: dotnet restore ${{env.PROJECT_PATH}} --configfile ${{env.NUGETCONFIG_PATH}}
 
     # Update the app manifest using the sideload publisher identity
-    - name: SIDELOAD - Update manifest for side load build
-      if: ${{matrix.target_audience}} == 'sideload'
+    - name: Update manifest for side load build
       run: |
         [xml]$manifest = get-content 'NoteTakingApp.Maui\Platforms\Windows\Package.appxmanifest'
-        $manifest.Package.Identity.Version = "${{steps.version-creator.outputs.APP_VERSION}}"
+        $manifest.Package.Identity.Version = "${{needs.generate-version.outputs.number}}"
         $manifest.Package.Identity.Name = 'scottware.NoteTaker'
         $manifest.Package.Identity.Publisher = 'CN="Lancelot Software, LLC", O="Lancelot Software, LLC", L=NORTH BILLERICA, S=Massachusetts, C=US'
         $manifest.Package.Properties.DisplayName = 'NoteTake_r'
@@ -137,8 +160,7 @@ jobs:
         $manifest.save("NoteTakingApp.Maui\Platforms\Windows\Package.appxmanifest")
     
     # CODESIGN OPTION 1 - Using a PFX to sign the msix file
-    - name: SIDELOAD - Save certificate Base64 To .pfx file
-      if: ${{matrix.target_audience}} == 'sideload'
+    - name: Save certificate Base64 To .pfx file
       id: save-pfx-file
       uses: timheuer/base64-to-file@v1.2
       with:
@@ -147,15 +169,14 @@ jobs:
         encodedString: ${{secrets.CODESIGN_CERTIFICATE_BASE64}}
 
     # Compile and publish the WinUI project with codesigning enabled so it can be installed without the Microsoft Store
-    - name: SIDELOAD - Build Maui WinUI project
-      if: ${{matrix.target_audience}} == 'sideload'
+    - name: Build Maui WinUI project
       shell: pwsh
       run: dotnet publish ${{env.PROJECT_PATH}} -c ${{env.BUILD_CONFIG}} -f "${{env.TFM}}-windows10.0.19041.0" -p:RuntimeIdentifierOverride=win10-x64 -p:PublishTrimmed=False -p:GenerateAppxPackageOnBuild=true -p:AppxPackageSigningEnabled=true -p:EnableMsixTooling=true --self-contained=true -p:PackageCertificateKeyFile="${{steps.save-pfx-file.outputs.filePath}}" -p:PackageCertificatePassword="${{secrets.CODESIGN_CERTIFICATE_PASSWORD}}"
 
     # CODESIGN OPTION 2 - When you get your own Code Signing identity, we can sign the msix file much easier
     # # Login to Azure CLI
     # # No secrets needed! This will use the GitHub OIDC token to authenticate.
-    # - name: SIDELOAD - Azure login using OIDC via GitHub
+    # - name: Azure login using OIDC via GitHub
     #   uses: azure/login@v2
     #   id: azlogin
     #   with:
@@ -163,7 +184,7 @@ jobs:
     #     tenant-id: "bd47e796-3473-4b8a-9101-1f4c0c7af31a"
     #     subscription-id: "48ab4839-62af-4ab3-afe6-043ea4d7c137"
     #
-    # - name: SIDELOAD - Sign files with Trusted Signing
+    # - name: Sign files with Trusted Signing
     #   uses: azure/trusted-signing-action@v0.4.0
     #   with:
     #     endpoint: https://eus.codesigning.azure.net/
@@ -187,43 +208,38 @@ jobs:
     #     exclude-azure-developer-cli-credential: true
     #     exclude-interactive-browser-credential: true
     #
-    # - name: SIDELOAD - Build Maui WinUI project
-    #   if: ${{matrix.target_audience}} == 'sideload'
+    # - name: Build Maui WinUI project
     #   shell: pwsh
     #   run: dotnet publish ${{env.PROJECT_PATH}} -c ${{env.BUILD_CONFIG}} -f "${{env.TFM}}-windows10.0.19041.0" -p:RuntimeIdentifierOverride=win10-x64 -p:PublishTrimmed=False -p:GenerateAppxPackageOnBuild=true -p:AppxPackageSigningEnabled=false -p:EnableMsixTooling=true --self-contained=true
     
     # Find the msix file
-    - name: SIDELOAD - Locate msix
-      if: ${{matrix.target_audience}} == 'sideload'
-      id: find-sideload-msix
+    - name: Locate msix
+      id: find-msix-file
       shell: pwsh
       run: |
         $msixPath = Get-ChildItem -Filter NoteTakingApp.Maui*.msix -Recurse | %{$_.FullName}
         echo "PACKAGE_PATH=$msixPath" >> $env:GITHUB_OUTPUT
 
-    - name: SIDELOAD - Attach artifacts
-      if: ${{matrix.target_audience}} == 'sideload'
+    - name: Attach artifacts
       uses: actions/upload-artifact@v4
       with:     
-        name: "SIDELOAD_NoteTakingApp.Maui_v${{steps.version-creator.outputs.APP_VERSION}}.msix" 
-        path: ${{steps.find-sideload-msix.outputs.PACKAGE_PATH}}
+        name: "SIDELOAD_NoteTakingApp.Maui_v${{needs.generate-version.outputs.number}}.msix" 
+        path: ${{steps.find-msix-file.outputs.PACKAGE_PATH}}
         if-no-files-found: error
         retention-days: 30
 
     # Create a GitHub Release with the msix file(s) attached
-    - name: SIDELOAD - Create GitHub Release
-      if: ${{matrix.target_audience}} == 'sideload'
+    - name: Create GitHub Release
       id: create_release
       uses: softprops/action-gh-release@v2
       with:
         fail_on_unmatched_files: true
-        name: "NoteTakingApp.Maui v.${{steps.version-creator.outputs.APP_VERSION}}"
-        tag_name: "v${{steps.version-creator.outputs.APP_VERSION}}"
-        body: "This is v.${{steps.version-creator.outputs.APP_VERSION}} of the xkcd viewer app. To install, download and run the .msix installer file."
-        files: ${{steps.find-msix.outputs.PACKAGE_PATH}}
+        name: "NoteTakingApp.Maui v.${{needs.generate-version.outputs.number}}"
+        tag_name: "v${{needs.generate-version.outputs.number}}"
+        body: "This is v.${{needs.generate-version.outputs.number}} of the xkcd viewer app. To install, download and run the .msix installer file."
+        files: ${{steps.find-msix-file.outputs.PACKAGE_PATH}}
 
-    - name: SIDELOAD - Cleanup build artifacts
-      if: ${{matrix.target_audience}} == 'sideload'
+    - name: Cleanup build artifacts
       shell: pwsh
       run: Remove-Item * -Include *.msix -Recurse -Force
 
@@ -231,7 +247,9 @@ jobs:
 # >>>>>>> Android build <<<<<<< #
 # ***************************** #
   maui-android:
+    name: Build Android
     runs-on: windows-2022
+    needs: generate-version
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -248,14 +266,6 @@ jobs:
         distribution: 'microsoft'
         java-version: '11'
 
-    - name: Generate version number using date and run number
-      shell: pwsh
-      id: version-creator
-      run: |
-        $buildDay = Get-Date -Format "yyyy.Mdd"
-        $ver = $buildDay + "." + $env:GITHUB_RUN_NUMBER + ".0"
-        echo "APP_VERSION=$ver" >> $GITHUB_OUTPUT
-
     - name: Install MAUI workloads (required for GitHub-hosted runners)
       shell: pwsh
       run: dotnet workload install maui --source https://api.nuget.org/v3/index.json
@@ -268,11 +278,41 @@ jobs:
       shell: pwsh
       run: dotnet build ${{ env.PROJECT_PATH }} -c Debug -f net8.0-android -p:PublishTrimmed=False
 
+    # ! When you have a Google Play account and certificates, we can switch to this release setup
+    # # Decode keystore base64 secret into a local file
+    # - name: Decode the Keystore into File
+    #   run: |
+    #     $file_bytes = [System.Convert]::FromBase64String("${{secrets.ANDROID_SIGNING_KEYSTORE_BASE64}}")
+    #     [IO.File]::WriteAllBytes("${{github.workspace}}/${{secrets.ANDROID_SIGNING_KEYSTORE_FILENAME}}", $file_bytes)
+
+    # # Docs https://learn.microsoft.com/en-us/dotnet/maui/android/deployment/publish-cli?view=net-maui-8.0
+    # - name: Build MAUI Android project
+    #   run: dotnet publish ${{env.PROJECT_PATH}} -c ${{env.BUILD_CONFIGURATION}} -f ${{env.TFM}} -p:AndroidKeyStore=true -p:AndroidSigningKeyStore="${{github.workspace}}/${{secrets.ANDROID_SIGNING_KEYSTORE_FILENAME}}" -p:AndroidSigningStorePass="${{secrets.ANDROID_SIGNING_STORE_PASS}}" -p:AndroidSigningKeyAlias="${{secrets.ANDROID_SIGNING_KEY_ALIAS}}" -p:AndroidSigningKeyPass="${{secrets.ANDROID_SIGNING_KEY_PASS}}"
+
+    # # Upload the artifact the Action's result
+    # # To publish to the store, see https://github.com/marketplace/actions/upload-android-release-to-play-store
+    # - name: Upload Android artifacts (APKs & AABs)
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: "Android Artifacts" 
+    #     path: "${{github.workspace}}/**/*Signed.a*"
+    #     if-no-files-found: warn
+    #     retention-days: 10
+
 # ************************* #
 # >>>>>>> iOS Build <<<<<<< #
 # ************************* #
   maui-ios:
+    name: Build iOS
     runs-on: macos-12
+    needs: generate-version    
+    # env:
+    #   CODESIGN_KEY: "Apple Distribution: MyCompany (L25222N3C7)"
+    #   CODESIGN_PROV_PROFILE: "mauidemo_ios_appstore"
+    #   CODESIGN_PROFILE_TYPE: "IOS_APP_STORE"
+    #   APP_ID: "com.mycompany.mauidemo"
+    #   RID: ios-arm64
+    #   TFM: net8.0-ios
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -287,16 +327,6 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
-
-    - name: Generate version number using date and run number
-      id: version-creator
-      shell: bash
-      run: |
-        buildDay=`date +%Y.%m%d`
-        echo $buildDay
-        ver="${buildDay}.${GITHUB_RUN_NUMBER}.0"
-        echo $ver
-        echo "APP_VERSION=$ver" >> $GITHUB_ENV
 
     - name: Install MAUI workloads (required for GitHub-hosted runners)
       shell: pwsh
@@ -310,18 +340,60 @@ jobs:
       shell: bash
       run: dotnet build ${{ env.PROJECT_PATH }} -c Debug -f net8.0-ios -p:PublishTrimmed=True -p:MtouchLink=SdkOnly
 
+    # ! When you have an apple account and certificates, we can switch to this release setup
+    # # Docs https://github.com/Apple-Actions/import-codesign-certs
+    # - name: Import Code-Signing Certificates
+    #   uses: Apple-Actions/import-codesign-certs@v2
+    #   with:
+    #     p12-file-base64: "${{secrets.APPLE_DISTRIBUTION_CERT_BASE64}}"
+    #     p12-password: "${{secrets.APPLE_DISTRIBUTION_CERT_PASSWORD}}"
+
+    # # Docs https://github.com/Apple-Actions/download-provisioning-profiles
+    # - uses: Apple-Actions/download-provisioning-profiles@v2
+    #   with:
+    #     profile-type: ${{env.APP_ID}}
+    #     bundle-id: "${{env.CODESIGN_PROV_PROFILE}}"
+    #     issuer-id: "${{secrets.APPSTORE_API_ISSUER_ID}}"
+    #     api-key-id: "${{secrets.APPSTORE_API_KEY_ID}}"
+    #     api-private-key: "${{secrets.APPSTORE_API_PRIVATE_KEY}}"
+
+    # # Docs https://learn.microsoft.com/en-us/dotnet/maui/ios/deployment/publish-cli?view=net-maui-8.0
+    # - name: Build MAUI iOS project
+    #   run: |
+    #     dotnet publish ${{env.PROJECT_PATH}} -c ${{env.BUILD_CONFIGURATION}} -f ${{env.TFM}} -p:RuntimeIdentifier=${{env.RID}} -p:PublishTrimmed=true -p:MtouchLink=SdkOnly -p:ApplicationId=${{env.APP_ID}} -p:CodesignProvision=${{env.CODESIGN_PROV_PROFILE}} -p:CodesignKey=${{env.CODESIGN_KEY}}
+
+    # # Docs https://github.com/Apple-Actions/upload-testflight-build
+    # - name: 'Upload app to TestFlight'
+    #   uses: apple-actions/upload-testflight-build@v1
+    #   with: 
+    #     app-path: "${{github.workspace}}/**/*.ipa" 
+    #     issuer-id: ${{secrets.APPSTORE_API_ISSUER_ID}}
+    #     api-key-id: "${{secrets.APPSTORE_API_KEY_ID}}"
+    #     api-private-key: "${{secrets.APPSTORE_API_PRIVATE_KEY}}"
+
 
 # ********************************* #
 # >>>>>>> MacCatalyst Build <<<<<<< #
 # ********************************* #
   maui-macos:
+    name: Build MacCatalyst
     runs-on: macos-12
+    needs: generate-version
+    # env:
+    #   CODESIGN_KEY: "Apple Distribution: MyCompany (L25222N3C7)"
+    #   CODESIGN_PROV_PROFILE: "mauidemo_maccatalyst_appstore"
+    #   CODESIGN_PROFILE_TYPE: "MAC_APP_STORE"
+    #   CODESIGN_ENTITLEMENTS: "Platforms/MacCatalyst/Entitlements.plist"
+    #   APP_ID: "com.mycompany.mauidemo"
+    #   RID: maccatalyst-x64
+    #   TFM: net8.0-maccatalyst
     steps:
     - name: Checkout
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
+    # If the GitHub runner 
     #- uses: maxim-lobanov/setup-xcode@v1
     #  with:
     #    xcode-version: latest
@@ -330,16 +402,6 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
-
-    - name: Generate version number using date and run number
-      id: version-creator
-      shell: bash
-      run: |
-        buildDay=`date +%Y.%m%d`
-        echo $buildDay
-        ver="${buildDay}.${GITHUB_RUN_NUMBER}.0"
-        echo $ver
-        echo "APP_VERSION=$ver" >> $GITHUB_ENV
 
     - name: Install MAUI workloads (required for GitHub-hosted runners)
       shell: pwsh
@@ -352,3 +414,34 @@ jobs:
     - name: Build MAUI MacCatalyst project
       shell: bash
       run: dotnet build ${{ env.PROJECT_PATH }} -f net8.0-maccatalyst -c Debug -p:PublishTrimmed=True -p:MtouchLink=SdkOnly
+
+    # ! When you have an apple account and certificates, we can switch to this release setup
+    # # Docs https://github.com/Apple-Actions/import-codesign-certs
+    # - name: Import Code-Signing Certificates
+    #   uses: Apple-Actions/import-codesign-certs@v2
+    #   with:
+    #     p12-file-base64: "${{secrets.APPLE_DISTRIBUTION_CERT_BASE64}}"
+    #     p12-password: "${{secrets.APPLE_DISTRIBUTION_CERT_PASSWORD}}"
+
+    # # Docs https://github.com/Apple-Actions/download-provisioning-profiles
+    # - uses: Apple-Actions/download-provisioning-profiles@v2
+    #   with:
+    #     profile-type: ${{env.APP_ID}}
+    #     bundle-id: "${{env.CODESIGN_PROV_PROFILE}}"
+    #     issuer-id: "${{secrets.APPSTORE_API_ISSUER_ID}}"
+    #     api-key-id: "${{secrets.APPSTORE_API_KEY_ID}}"
+    #     api-private-key: "${{secrets.APPSTORE_API_PRIVATE_KEY}}"
+
+    # # Docs https://learn.microsoft.com/en-us/dotnet/maui/mac-catalyst/deployment/publish-app-store?view=net-maui-8.0 (carefully follow the intructions about entitlements.plist and info.plist)
+    # - name: Build MAUI MacCatalyst project
+    #   run: |
+    #     dotnet publish ${{env.PROJECT_PATH}} -c ${{env.BUILD_CONFIGURATION}} -f ${{env.TFM}} -p:RuntimeIdentifier=${{env.RID}} -p:EnableCodeSigning=true -p:EnablePackageSigning=true -p:PublishTrimmed=true -p:MtouchLink=SdkOnly -p:ApplicationId=${{env.APP_ID}} -p:CodesignProvision=${{env.CODESIGN_PROV_PROFILE}} -p:CodesignKey=${{env.CODESIGN_KEY}} -p:CodesignEntitlements=${{env.CODESIGN_ENTITLEMENTS}}
+
+    # # Docs https://github.com/Apple-Actions/upload-testflight-build
+    # - name: 'Upload app to TestFlight'
+    #   uses: apple-actions/upload-testflight-build@v1
+    #   with: 
+    #     app-path: "${{github.workspace}}/**/*.pkg" 
+    #     issuer-id: ${{secrets.APPSTORE_API_ISSUER_ID}}
+    #     api-key-id: "${{secrets.APPSTORE_API_KEY_ID}}"
+    #     api-private-key: "${{secrets.APPSTORE_API_PRIVATE_KEY}}"
