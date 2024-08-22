@@ -6,7 +6,7 @@
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
   IgnorableNamespaces="uap rescap">
 
-  <Identity Name="scottware.NoteTaker" Publisher="CN=63DAA465-AC12-4F45-960F-1C6EC865C821" Version="1.1.0.0" />
+  <Identity Name="scottware.NoteTaker" Publisher="CN=63DAA465-AC12-4F45-960F-1C6EC865C821" Version="1.1.1.0" />
 
   <mp:PhoneIdentity PhoneProductId="ce0a7033-f600-4917-a48d-79fadcd0caaf" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
