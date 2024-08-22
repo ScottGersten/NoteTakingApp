@@ -37,22 +37,22 @@ jobs:
       matrix:
         target_audience: [msstore, sideload]
     steps:
-    - name: Checkout
+    - name: COMMON - Checkout
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
-    - name: Setup .NET Core SDK
+    - name: COMMON - Setup .NET Core SDK
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
 
     # For WinUI builds
-    - name: Add msbuild to PATH
+    - name: COMMON - Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.3.2    
       
     # This generates a unique version number using the date and the workflow run number (e.g. 2022.0314.1.0)
-    - name: Generate version number using date and run number
+    - name: COMMON - Generate version number using date and run number
       id: version-creator
       run: |
         $buildDay = Get-Date -Format "yyyy.Mdd"
@@ -61,12 +61,12 @@ jobs:
         echo "APP_VERSION=$ver" >> $env:GITHUB_OUTPUT
 
     # The hosted runners do not have the maui workload installed by default, so we need to install it
-    - name: Install MAUI workloads (required for GitHub-hosted runners)
+    - name: COMMON - Install MAUI workloads (required for GitHub-hosted runners)
       shell: pwsh
       run: dotnet workload install maui --source https://api.nuget.org/v3/index.json
 
     # Restore NuGet packages ahead of time because we want to use the dedicated nuget.config file
-    - name: Restore NuGet packages
+    - name: COMMON - Restore NuGet packages
       shell: pwsh
       run: dotnet restore ${{env.PROJECT_PATH}} --configfile ${{env.NUGETCONFIG_PATH}}
 
@@ -76,7 +76,7 @@ jobs:
     # ----------------------------------------------------------- #
     
     # Update the manifest for Microsoft Store identity
-    - name: Update manifest for Microsoft Store build
+    - name: STORE - Update manifest for Microsoft Store build
       if: ${{matrix.target_audience}} == 'msstore'
       run: |
         [xml]$manifest = get-content "NoteTakingApp.Maui\Platforms\Windows\Package.appxmanifest"
@@ -89,29 +89,34 @@ jobs:
         $manifest.save("NoteTakingApp.Maui\Platforms\Windows\Package.appxmanifest")
 
     # Compile and publish the WinUI project for the Microsoft Store (no code signing)
-    - name: Build Maui WinUI project
+    - name: STORE - Build Maui WinUI project
       if: ${{matrix.target_audience}} == 'msstore'
       shell: pwsh
       run: dotnet publish ${{env.PROJECT_PATH}} -c ${{env.BUILD_CONFIG}} -f "${{env.TFM}}-windows10.0.19041.0" -p:RuntimeIdentifierOverride=win10-x64 -p:PublishTrimmed=False -p:GenerateAppxPackageOnBuild=true -p:AppxPackageSigningEnabled=false -p:EnableMsixTooling=true --self-contained=true
     
-    # Find the msix path ahead of time, to make it easier for the next set of steps and publishing the GitHub release
-    - name: Locate msix
+    # Find the msix file
+    - name: STORE - Locate msix
       if: ${{matrix.target_audience}} == 'msstore'
-      id: find-msix
+      id: find-store-msix
       shell: pwsh
       run: |
         $msixPath = Get-ChildItem -Filter NoteTakingApp.Maui*.msix -Recurse | %{$_.FullName}
         echo "PACKAGE_PATH=$msixPath" >> $env:GITHUB_OUTPUT
 
     # Attaching the msix files to the GitHub artifacts for each build (this is not a GitHub release)
-    - name: Publish build artifacts
+    - name: STORE - Attach artifacts
       if: ${{matrix.target_audience}} == 'msstore'
       uses: actions/upload-artifact@v4
       with:     
         name: "STORE_NoteTakingApp.Maui_v${{steps.version-creator.outputs.APP_VERSION}}.msix" 
-        path: ${{steps.find-msix.outputs.PACKAGE_PATH}}
+        path: ${{steps.find-store-msix.outputs.PACKAGE_PATH}}
         if-no-files-found: error
         retention-days: 30
+
+    - name: STORE - Cleanup build artifacts
+      if: ${{matrix.target_audience}} == 'msstore'
+      shell: pwsh
+      run: Remove-Item * -Include *.msix -Recurse -Force
 
     # ----------------------------------------------------------- #
     #                   SIDELOAD MATRIX STEPS                     #
@@ -119,7 +124,7 @@ jobs:
     # ----------------------------------------------------------- #
 
     # Update the app manifest using the sideload publisher identity
-    - name: Update manifest for side load build
+    - name: SIDELOAD - Update manifest for side load build
       if: ${{matrix.target_audience}} == 'sideload'
       run: |
         [xml]$manifest = get-content "NoteTakingApp.Maui\Platforms\Windows\Package.appxmanifest"
@@ -132,7 +137,7 @@ jobs:
         $manifest.save("NoteTakingApp.Maui\Platforms\Windows\Package.appxmanifest")
     
     # CODESIGN OPTION 1 - Using a PFX to sign the msix file
-    - name: Save certificate Base64 To .pfx file
+    - name: SIDELOAD - Save certificate Base64 To .pfx file
       if: ${{matrix.target_audience}} == 'sideload'
       id: save-pfx-file
       uses: timheuer/base64-to-file@v1.2
@@ -142,7 +147,7 @@ jobs:
         encodedString: ${{secrets.CODESIGN_CERTIFICATE_BASE64}}
 
     # Compile and publish the WinUI project with codesigning enabled so it can be installed without the Microsoft Store
-    - name: Build Maui WinUI project
+    - name: SIDELOAD - Build Maui WinUI project
       if: ${{matrix.target_audience}} == 'sideload'
       shell: pwsh
       run: dotnet publish ${{env.PROJECT_PATH}} -c ${{env.BUILD_CONFIG}} -f "${{env.TFM}}-windows10.0.19041.0" -p:RuntimeIdentifierOverride=win10-x64 -p:PublishTrimmed=False -p:GenerateAppxPackageOnBuild=true -p:AppxPackageSigningEnabled=true -p:EnableMsixTooling=true --self-contained=true -p:PackageCertificateThumbprint=${{secrets.CODESIGN_CERTIFICATE_THUMBPRINT}} -p:PackageCertificateKeyFile="${{steps.save-pfx-file.outputs.filePath}}" -p:PackageCertificatePassword="${{secrets.CODESIGN_CERTIFICATE_PASSWORD}}"
@@ -150,7 +155,7 @@ jobs:
     # CODESIGN OPTION 2 - When you get your own Code Signing identity, we can sign the msix file much easier
     # # Login to Azure CLI
     # # No secrets needed! This will use the GitHub OIDC token to authenticate.
-    # - name: Azure login using OIDC via GitHub
+    # - name: SIDELOAD - Azure login using OIDC via GitHub
     #   uses: azure/login@v2
     #   id: azlogin
     #   with:
@@ -158,7 +163,7 @@ jobs:
     #     tenant-id: "bd47e796-3473-4b8a-9101-1f4c0c7af31a"
     #     subscription-id: "48ab4839-62af-4ab3-afe6-043ea4d7c137"
     #
-    # - name: Sign files with Trusted Signing
+    # - name: SIDELOAD - Sign files with Trusted Signing
     #   uses: azure/trusted-signing-action@v0.4.0
     #   with:
     #     endpoint: https://eus.codesigning.azure.net/
@@ -182,22 +187,31 @@ jobs:
     #     exclude-azure-developer-cli-credential: true
     #     exclude-interactive-browser-credential: true
     #
-    # - name: Build Maui WinUI project
+    # - name: SIDELOAD - Build Maui WinUI project
     #   if: ${{matrix.target_audience}} == 'sideload'
     #   shell: pwsh
     #   run: dotnet publish ${{env.PROJECT_PATH}} -c ${{env.BUILD_CONFIG}} -f "${{env.TFM}}-windows10.0.19041.0" -p:RuntimeIdentifierOverride=win10-x64 -p:PublishTrimmed=False -p:GenerateAppxPackageOnBuild=true -p:AppxPackageSigningEnabled=false -p:EnableMsixTooling=true --self-contained=true
+    
+    # Find the msix file
+    - name: SIDELOAD - Locate msix
+      if: ${{matrix.target_audience}} == 'sideload'
+      id: find-sideload-msix
+      shell: pwsh
+      run: |
+        $msixPath = Get-ChildItem -Filter NoteTakingApp.Maui*.msix -Recurse | %{$_.FullName}
+        echo "PACKAGE_PATH=$msixPath" >> $env:GITHUB_OUTPUT
 
-    - name: Publish build artifacts
+    - name: SIDELOAD - Attach artifacts
       if: ${{matrix.target_audience}} == 'sideload'
       uses: actions/upload-artifact@v4
       with:     
         name: "SIDELOAD_NoteTakingApp.Maui_v${{steps.version-creator.outputs.APP_VERSION}}.msix" 
-        path: ${{steps.find-msix.outputs.PACKAGE_PATH}}
+        path: ${{steps.find-sideload-msix.outputs.PACKAGE_PATH}}
         if-no-files-found: error
         retention-days: 30
 
     # Create a GitHub Release with the msix file(s) attached
-    - name: Create GitHub Release
+    - name: SIDELOAD - Create GitHub Release
       if: ${{matrix.target_audience}} == 'sideload'
       id: create_release
       uses: softprops/action-gh-release@v2
@@ -208,6 +222,10 @@ jobs:
         body: "This is v.${{steps.version-creator.outputs.APP_VERSION}} of the xkcd viewer app. To install, download and run the .msix installer file."
         files: ${{steps.find-msix.outputs.PACKAGE_PATH}}
 
+    - name: SIDELOAD - Cleanup build artifacts
+      if: ${{matrix.target_audience}} == 'sideload'
+      shell: pwsh
+      run: Remove-Item * -Include *.msix -Recurse -Force
 
 # ***************************** #
 # >>>>>>> Android build <<<<<<< #
