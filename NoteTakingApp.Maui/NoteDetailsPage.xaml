@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="NoteTakingApp.Maui.NoteDetailsPage"
+             Title="NoteDetailsPage">
+
+    <VerticalStackLayout Padding="10">
+        <Editor x:Name="NoteEditor"
+                TextColor="{StaticResource PrimaryDarkText}"
+                BackgroundColor="{StaticResource PrimaryDark}"
+                AutoSize="TextChanges"
+                VerticalOptions="FillAndExpand" />
+
+        <HorizontalStackLayout HorizontalOptions="End"
+                               Spacing="10"
+                               BackgroundColor="Black">
+            <Button x:Name="SaveButton"
+                    Text="Save"
+                    TextColor="Green"
+                    FontAttributes="Bold"
+                    BackgroundColor="Azure"
+                    Clicked="SaveButton_Clicked" />
+
+            <Button x:Name="CancelButton"
+                    Text="Cancel"
+                    TextColor="Orange"
+                    FontAttributes="Bold"
+                    BackgroundColor="Azure"
+                    Clicked="CancelButton_Clicked" />
+
+        </HorizontalStackLayout>
+    </VerticalStackLayout>
+</ContentPage>

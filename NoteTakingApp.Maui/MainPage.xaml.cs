@@ -89,16 +89,20 @@ public partial class MainPage : ContentPage
 
     }
 
-    private void ViewNoteButton_Clicked(object sender, EventArgs e)
+    private async void ViewNoteButton_Clicked(object sender, EventArgs e)
     {
-        if(NotesCollectionView.SelectedItem is Note note)
+        if(NotesCollectionView.SelectedItem is Note selectedNote)
         {
-            TitleEditor.Text = note.Title;
-            NoteEditor.Text = note.Text;
+            var navigationParameter = new Dictionary<string, object>
+            {
+                {"SelectedNote", selectedNote }
+            };
+
+            await Shell.Current.GoToAsync(nameof(NoteDetailsPage), navigationParameter);
         }
         else
         {
-            DisplayAlert("Error", "Please select a note to view", "OK");
+            await DisplayAlert("Error", "Please select a note to view", "OK");
         }
 
     }
