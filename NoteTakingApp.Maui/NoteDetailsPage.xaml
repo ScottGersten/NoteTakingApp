@@ -11,8 +11,9 @@
                 AutoSize="TextChanges"
                 VerticalOptions="FillAndExpand" />
 
-        <HorizontalStackLayout HorizontalOptions="End"
+        <HorizontalStackLayout HorizontalOptions="Center"
                                Spacing="10"
+                               Padding="10"
                                BackgroundColor="Black">
             <Button x:Name="SaveButton"
                     Text="Save"
