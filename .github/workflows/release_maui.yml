@@ -1,15 +1,12 @@
 name: .NET MAUI Release
 
-# We can trigger this workflow by...
 on:
-  # Optino 1 - A manual trigger inthe GitHub UI
   workflow_dispatch:
-  # Option 2 - pushing to the maui-release branch
   push:
     branches:
       - maui-release
 
-# Permissions for Azure CLI login using OIDC and publishing a GitHub Release
+# Needed for JWT and OIDC tokens
 permissions:
   id-token: write
   contents: write
@@ -27,9 +24,9 @@ env:
   TELERIK_NUGET_KEY: ${{secrets.NUGET_KEY}}
 
 jobs:
-# ********************************************** #
-# >>>>>>> Create a common version number <<<<<<< #
-# ********************************************** #
+# ******************************************************************************************************** #
+#                                >>>>>>> Generate Common Resources <<<<<<<                                 #
+# ******************************************************************************************************** #
   generate-version:
     name: Create App Version Number
     runs-on: windows-2022
@@ -45,13 +42,9 @@ jobs:
         echo "APP_VERSION=$ver" >> $GITHUB_ENV
 
 
-# ****************************** #
-# >>>>>>> Windows Builds <<<<<<< #
-# ****************************** #
-
-  # ------------------------------- #
-  # 1 - Microsoft Store MSIX build
-  # ------------------------------- #
+# ******************************************************************************************************** #
+#                            >>>>>>> Windows Microsoft Store build <<<<<<<                                 #
+# ******************************************************************************************************** #
   maui-windows-msstore:
     name: Build Windows MS Store
     runs-on: windows-2022
@@ -115,9 +108,10 @@ jobs:
         if-no-files-found: error
         retention-days: 30
 
-  # ------------------------------- #
-  # 2 - Windows Sideload MSIX build
-  # ------------------------------- #
+
+# ******************************************************************************************************** #
+#                                >>>>>>> Windows Sideload build <<<<<<<                                    #
+# ******************************************************************************************************** #
   maui-windows-sideload:
     name: Build Windows Sideload
     runs-on: windows-2022
@@ -159,6 +153,13 @@ jobs:
         $manifest.Package.Applications.Application.VisualElements.DisplayName = 'NoteTake_r'
         $manifest.save("NoteTakingApp.Maui\Platforms\Windows\Package.appxmanifest")
     
+    - name: Fetch secrets from AKeyless
+      id: akeyless
+      uses: LanceMcCarthy/akeyless-action@v4
+      with:
+        access-id: 'p-fq3qbjjxv839'
+        static-secrets: '{"/personal-keys/mccarthy/lancelot-pfx-base64":"pfx-base64", "/personal-keys/mccarthy/lancelot-pfx-privatekey":"pfx-password"}'
+
     # CODESIGN OPTION 1 - Using a PFX to sign the msix file
     - name: Save certificate Base64 To .pfx file
       id: save-pfx-file
@@ -166,12 +167,12 @@ jobs:
       with:
         fileName: "LancelotSoftwareLLC.pfx"
         fileDir: "${{github.workspace}}"
-        encodedString: ${{secrets.CODESIGN_CERTIFICATE_BASE64}}
+        encodedString: ${{steps.akeyless.outputs.pfx-base64}}
 
     # Compile and publish the WinUI project with codesigning enabled so it can be installed without the Microsoft Store
     - name: Build Maui WinUI project
       shell: pwsh
-      run: dotnet publish ${{env.PROJECT_PATH}} -c ${{env.BUILD_CONFIG}} -f "${{env.TFM}}-windows10.0.19041.0" -p:RuntimeIdentifierOverride=win10-x64 -p:PublishTrimmed=False -p:GenerateAppxPackageOnBuild=true -p:AppxPackageSigningEnabled=true -p:EnableMsixTooling=true --self-contained=true -p:PackageCertificateKeyFile="${{steps.save-pfx-file.outputs.filePath}}" -p:PackageCertificatePassword="${{secrets.CODESIGN_CERTIFICATE_PASSWORD}}"
+      run: dotnet publish ${{env.PROJECT_PATH}} -c ${{env.BUILD_CONFIG}} -f "${{env.TFM}}-windows10.0.19041.0" -p:RuntimeIdentifierOverride=win10-x64 -p:PublishTrimmed=False -p:GenerateAppxPackageOnBuild=true -p:AppxPackageSigningEnabled=true -p:EnableMsixTooling=true --self-contained=true -p:PackageCertificateKeyFile="${{steps.save-pfx-file.outputs.filePath}}" -p:PackageCertificatePassword="${{steps.akeyless.outputs.pfx-password}}"
 
     # CODESIGN OPTION 2 - When you get your own Code Signing identity, we can sign the msix file much easier
     # # Login to Azure CLI
@@ -243,9 +244,10 @@ jobs:
       shell: pwsh
       run: Remove-Item * -Include *.msix -Recurse -Force
 
-# ***************************** #
-# >>>>>>> Android build <<<<<<< #
-# ***************************** #
+
+# ******************************************************************************************************** #
+#                                     >>>>>>> Android build <<<<<<<                                        #
+# ******************************************************************************************************** #
   maui-android:
     name: Build Android
     runs-on: windows-2022
@@ -299,9 +301,10 @@ jobs:
     #     if-no-files-found: warn
     #     retention-days: 10
 
-# ************************* #
-# >>>>>>> iOS Build <<<<<<< #
-# ************************* #
+
+# ******************************************************************************************************** #
+#                                       >>>>>>> iOS Build <<<<<<<                                          #
+# ******************************************************************************************************** #
   maui-ios:
     name: Build iOS
     runs-on: macos-12
@@ -372,9 +375,9 @@ jobs:
     #     api-private-key: "${{secrets.APPSTORE_API_PRIVATE_KEY}}"
 
 
-# ********************************* #
-# >>>>>>> MacCatalyst Build <<<<<<< #
-# ********************************* #
+# ******************************************************************************************************** #
+#                                  >>>>>>> MacCatalyst Build <<<<<<<                                       #
+# ******************************************************************************************************** #
   maui-macos:
     name: Build MacCatalyst
     runs-on: macos-12
