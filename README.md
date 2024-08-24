@@ -7,7 +7,7 @@ This is a WinForms application, packaged and distributed using MSIX.
 |         | `master` | `release` |
 |---------|------------------|-------------------|
 | WinForms | [![Buid Winforms Project](https://github.com/ScottGersten/NoteTakingApp/actions/workflows/master.yml/badge.svg)](https://github.com/ScottGersten/NoteTakingApp/actions/workflows/master.yml) | [![Publish Release](https://github.com/ScottGersten/NoteTakingApp/actions/workflows/release.yml/badge.svg)](https://github.com/ScottGersten/NoteTakingApp/actions/workflows/release.yml) |
-| .NET MAUI | [![Build MAUI Project](https://github.com/ScottGersten/NoteTakingApp/actions/workflows/master_maui.yml/badge.svg)](https://github.com/ScottGersten/NoteTakingApp/actions/workflows/master_maui.yml) | n/a |
+| .NET MAUI | [![Build MAUI Project](https://github.com/ScottGersten/NoteTakingApp/actions/workflows/master_maui.yml/badge.svg)](https://github.com/ScottGersten/NoteTakingApp/actions/workflows/master_maui.yml) | [![.NET MAUI Release](https://github.com/ScottGersten/NoteTakingApp/actions/workflows/release_maui.yml/badge.svg)](https://github.com/ScottGersten/NoteTakingApp/actions/workflows/release_maui.yml) |
 
 ## Installation
 
