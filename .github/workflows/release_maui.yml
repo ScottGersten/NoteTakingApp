@@ -12,10 +12,6 @@ permissions:
   contents: write
   discussions: write
 
-defaults:
-  run:
-    shell: pwsh
-
 env:
   PROJECT_PATH: "NoteTakingApp.Maui/NoteTakingApp.Maui.csproj"
   NUGETCONFIG_PATH: "nuget.config"
@@ -32,11 +28,14 @@ jobs:
 # ******************************************************************************************************** #
 #                                >>>>>>> Generate Common Resources <<<<<<<                                 #
 # ******************************************************************************************************** #
-  generate-version:
-    name: Create App Version Number
+  shared-resources:
+    name: Create Shared Resources
     runs-on: windows-2022
+    defaults:
+      run:
+        shell: pwsh
     outputs:
-      number: ${{steps.version-creator.outputs.APP_VERSION}}
+      app_version: ${{steps.version-creator.outputs.app_version}}
       upload_url: ${{steps.create_release.outputs.upload_url}}
     steps:
     # Generates a version number using year.monthday.run_number.0 (e.g., 2024.824.1.0)
@@ -45,18 +44,19 @@ jobs:
       run: |
         $buildDay = Get-Date -Format "yyyy.Mdd"
         $ver = $buildDay + "." + $env:GITHUB_RUN_NUMBER + ".0"
-        echo "APP_VERSION=$ver" >> $GITHUB_ENV
+        echo "app_version=$ver" >> $GITHUB_ENV
 
     # Create a new GitHub Release tagged with the build version number (via https://github.com/actions/create-release)
     - name: Create GitHub Release
+      if: ${{ steps.version-creator.outputs.app_version != '' }}
       id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
       with:
-        tag_name: "v${{steps.version-creator.outputs.APP_VERSION}}"
-        release_name: "NoteTakingApp v${{steps.version-creator.outputs.APP_VERSION}}"
-        body: This is v${{steps.version-creator.outputs.APP_VERSION}} of the xkcd viewer app. To install, use the appropriate installer file for your device.
+        tag_name: "v${{steps.version-creator.outputs.app_version}}"
+        release_name: "NoteTakingApp v${{steps.version-creator.outputs.app_version}}"
+        body: This is v${{steps.version-creator.outputs.app_version}} of the xkcd viewer app. To install, use the appropriate installer file for your device.
 
 
 # ******************************************************************************************************** #
@@ -64,8 +64,11 @@ jobs:
 # ******************************************************************************************************** #
   maui-windows-msstore:
     name: Build Windows MS Store
-    needs: generate-version
+    needs: shared-resources
     runs-on: windows-2022
+    defaults:
+      run:
+        shell: pwsh
     env:
       PLATFORM_TFM: windows10.0.19041.0
       RID: win10-x64
@@ -96,7 +99,7 @@ jobs:
     - name: Update manifest for Microsoft Store build
       run: |
         [xml]$manifest = get-content 'NoteTakingApp.Maui\Platforms\Windows\Package.appxmanifest'
-        $manifest.Package.Identity.Version = "${{needs.generate-version.outputs.number}}"
+        $manifest.Package.Identity.Version = "${{needs.shared-resources.outputs.app_version}}"
         $manifest.Package.Identity.Name = 'scottware.NoteTaker'
         $manifest.Package.Identity.Publisher = 'CN=63DAA465-AC12-4F45-960F-1C6EC865C821'
         $manifest.Package.Properties.DisplayName = 'NoteTake_r'
@@ -119,7 +122,7 @@ jobs:
     - name: Attach artifacts
       uses: actions/upload-artifact@v4
       with:     
-        name: "NoteTakingApp_v${{needs.generate-version.outputs.number}}_MsftStoreOnly.msix" 
+        name: "NoteTakingApp_v${{needs.shared-resources.outputs.app_version}}_MsftStoreOnly.msix" 
         path: ${{steps.find-msix-file.outputs.PACKAGE_PATH}}
         if-no-files-found: error
         retention-days: 30
@@ -131,18 +134,22 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{needs.generate-version.outputs.upload_url}}
+        upload_url: ${{needs.shared-resources.outputs.upload_url}}
         asset_path: ${{steps.find-msix-file.outputs.PACKAGE_PATH}}
-        asset_name: "NoteTakingApp_v${{needs.generate-version.outputs.number}}_MsftStoreOnly.msix"
+        asset_name: "NoteTakingApp_v${{needs.shared-resources.outputs.app_version}}_MsftStoreOnly.msix"
         asset_content_type: application/zip
+
 
 # ******************************************************************************************************** #
 #                                >>>>>>> Windows Sideload build <<<<<<<                                    #
 # ******************************************************************************************************** #
   maui-windows-sideload:
     name: Build Windows Sideload
-    needs: generate-version
+    needs: shared-resources
     runs-on: windows-2022
+    defaults:
+      run:
+        shell: pwsh
     strategy:
       matrix:
         RID: [win10-arm64, win10-x64]
@@ -175,7 +182,7 @@ jobs:
     - name: Update manifest for side load build
       run: |
         [xml]$manifest = get-content 'NoteTakingApp.Maui\Platforms\Windows\Package.appxmanifest'
-        $manifest.Package.Identity.Version = "${{needs.generate-version.outputs.number}}"
+        $manifest.Package.Identity.Version = "${{needs.shared-resources.outputs.app_version}}"
         $manifest.Package.Identity.Name = 'scottware.NoteTaker'
         $manifest.Package.Identity.Publisher = 'CN=" Lance McCarthy", O=" Lance McCarthy", L=Revere, S=Massachusetts, C=US'
         $manifest.Package.Properties.DisplayName = 'NoteTake_r'
@@ -227,7 +234,7 @@ jobs:
     - name: Attach artifacts to workflow run
       uses: actions/upload-artifact@v4
       with:     
-        name: "NoteTakingApp_v${{needs.generate-version.outputs.number}}_${{matrix.RID}}.msix" 
+        name: "NoteTakingApp_v${{needs.shared-resources.outputs.app_version}}_${{matrix.RID}}.msix" 
         path: ${{steps.find-msix-file.outputs.PACKAGE_PATH}}
         if-no-files-found: error
         retention-days: 30
@@ -239,9 +246,9 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{needs.generate-version.outputs.upload_url}}
+        upload_url: ${{needs.shared-resources.outputs.upload_url}}
         asset_path: ${{steps.find-msix-file.outputs.PACKAGE_PATH}}
-        asset_name: "NoteTakingApp_v${{needs.generate-version.outputs.number}}_${{matrix.RID}}.msix"
+        asset_name: "NoteTakingApp_v${{needs.shared-resources.outputs.app_version}}_${{matrix.RID}}.msix"
         asset_content_type: application/zip
 
 
@@ -250,8 +257,11 @@ jobs:
 # ******************************************************************************************************** #
   maui-android:
     name: Build Android
-    needs: generate-version
+    needs: shared-resources
     runs-on: windows-2022
+    defaults:
+      run:
+        shell: pwsh
     env:
       PLATFORM_TFM: android
       RID: android-arm64
@@ -308,18 +318,22 @@ jobs:
     #   env:
     #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     #   with:
-    #     upload_url: ${{needs.generate-version.outputs.upload_url}}
+    #     upload_url: ${{needs.shared-resources.outputs.upload_url}}
     #     asset_path: "${{github.workspace}}/**/*Signed.a*"
-    #     asset_name: "NoteTakingApp_v${{needs.generate-version.outputs.number}}_Android.aab"
+    #     asset_name: "NoteTakingApp_v${{needs.shared-resources.outputs.app_version}}_Android.aab"
     #     asset_content_type: application/zip
+
 
 # ******************************************************************************************************** #
 #                                       >>>>>>> iOS Build <<<<<<<                                          #
 # ******************************************************************************************************** #
   maui-ios:
     name: Build iOS
-    needs: generate-version
+    needs: shared-resources
     runs-on: macos-12
+    defaults:
+      run:
+        shell: pwsh
     env:
       PLATFORM_TFM: ios
       RID: ios-arm64
@@ -349,7 +363,7 @@ jobs:
       run: dotnet restore ${{env.PROJECT_PATH}} --configfile ${{env.NUGETCONFIG_PATH}}
 
     - name: Build MAUI iOS project
-      run: dotnet build ${{env.PROJECT_PATH}} -c Debug -f "${{env.ROOT_TFM}}-${{env.PLATFORM_TFM}}" -p:PublishTrimmed=True -p:MtouchLink=SdkOnly
+      run: dotnet build ${{env.PROJECT_PATH}} -c Release -f "${{env.ROOT_TFM}}-${{env.PLATFORM_TFM}}" -p:PublishTrimmed=True -p:MtouchLink=SdkOnly
 
     # ! When you have an apple account and certificates, we can switch to this release setup
     # # Docs https://github.com/Apple-Actions/import-codesign-certs
@@ -371,7 +385,7 @@ jobs:
     # # Docs https://learn.microsoft.com/en-us/dotnet/maui/ios/deployment/publish-cli?view=net-maui-8.0
     # - name: Build MAUI iOS project
     #   run: |
-    #     dotnet publish ${{env.PROJECT_PATH}} -c ${{env.BUILD_CONFIGURATION}} -f "${{env.ROOT_TFM}}-${{env.PLATFORM_TFM}}" -p:RuntimeIdentifier=${{env.RID}} -p:PublishTrimmed=true -p:MtouchLink=SdkOnly -p:ApplicationId=${{env.APP_ID}} -p:CodesignProvision=${{env.CODESIGN_PROV_PROFILE}} -p:CodesignKey=${{env.CODESIGN_KEY}}
+    #     dotnet publish ${{env.PROJECT_PATH}} -f "${{env.ROOT_TFM}}-${{env.PLATFORM_TFM}}" -p:RuntimeIdentifier=${{env.RID}} -p:PublishTrimmed=true -p:MtouchLink=SdkOnly -p:ApplicationId=${{env.APP_ID}} -p:CodesignProvision=${{env.CODESIGN_PROV_PROFILE}} -p:CodesignKey=${{env.CODESIGN_KEY}}
 
     # # Docs https://github.com/Apple-Actions/upload-testflight-build
     # - name: 'Upload app to TestFlight'
@@ -388,8 +402,11 @@ jobs:
 # ******************************************************************************************************** #
   maui-macos:
     name: Build MacCatalyst
-    needs: generate-version
+    needs: shared-resources
     runs-on: macos-12
+    defaults:
+      run:
+        shell: pwsh
     strategy:
       matrix:
         RID: [maccatalyst-arm64, maccatalyst-x64]
@@ -423,19 +440,7 @@ jobs:
       run: dotnet restore ${{env.PROJECT_PATH}} --configfile ${{env.NUGETCONFIG_PATH}}
     
     - name: Build MAUI MacCatalyst project
-      run: dotnet publish ${{env.PROJECT_PATH}} -f "${{env.ROOT_TFM}}-${{env.PLATFORM_TFM}}" -p:RuntimeIdentifier=${{matrix.RID}} -p:EnableCodeSigning=false -p:EnablePackageSigning=false -p:PublishTrimmed=true -p:MtouchLink=SdkOnly
-
-    # https://github.com/actions/upload-release-asset
-    - name: Attach asset to GitHub Release
-      id: upload-release-asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{needs.generate-version.outputs.upload_url}}
-        asset_path: "${{github.workspace}}/**/*.pkg"
-        asset_name: "NoteTakingApp_v${{needs.generate-version.outputs.number}}_${{matrix.RID}}.pkg"
-        asset_content_type: application/zip
+      run: dotnet build ${{env.PROJECT_PATH}} -c Release -f "${{env.ROOT_TFM}}-${{env.PLATFORM_TFM}}" -p:RuntimeIdentifier=${{matrix.RID}} -p:PublishTrimmed=true -p:MtouchLink=SdkOnly
 
     # When you have an apple account and certificates, we can switch to this release setup
 
@@ -469,3 +474,15 @@ jobs:
     #     issuer-id: ${{secrets.APPSTORE_API_ISSUER_ID}}
     #     api-key-id: "${{secrets.APPSTORE_API_KEY_ID}}"
     #     api-private-key: "${{secrets.APPSTORE_API_PRIVATE_KEY}}"
+
+    # https://github.com/actions/upload-release-asset
+    # - name: Attach asset to GitHub Release
+    #   id: upload-release-asset
+    #   uses: actions/upload-release-asset@v1
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   with:
+    #     upload_url: ${{needs.shared-resources.outputs.upload_url}}
+    #     asset_path: "${{github.workspace}}/**/*.pkg"
+    #     asset_name: "NoteTakingApp_v${{needs.shared-resources.outputs.app_version}}_${{matrix.RID}}.pkg"
+    #     asset_content_type: application/zip
