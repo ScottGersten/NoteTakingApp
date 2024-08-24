@@ -12,6 +12,10 @@ permissions:
   contents: write
   discussions: write
 
+defaults:
+      run:
+        shell: pwsh
+
 env:
   PROJECT_PATH: "NoteTakingApp.Maui/NoteTakingApp.Maui.csproj"
   NUGETCONFIG_PATH: "nuget.config"
@@ -43,8 +47,9 @@ jobs:
       id: version-creator
       run: |
         $buildDay = Get-Date -Format "yyyy.Mdd"
-        $ver = $buildDay + "." + $env:GITHUB_RUN_NUMBER + ".0"
-        echo "app_version=$ver" >> $GITHUB_ENV
+        $runNumber = "$env:GITHUB_RUN_NUMBER"
+        $ver = $buildDay + "." + $runNumber + ".0"
+        echo "app_version=$ver" >> $env:GITHUB_OUTPUT
 
     # Create a new GitHub Release tagged with the build version number (via https://github.com/actions/create-release)
     - name: Create GitHub Release
@@ -66,9 +71,7 @@ jobs:
     name: Build Windows MS Store
     needs: shared-resources
     runs-on: windows-2022
-    defaults:
-      run:
-        shell: pwsh
+    if: ${{ needs.shared-resources.outputs.app_version != '' && needs.shared-resources.outputs.upload_url != '' }}
     env:
       PLATFORM_TFM: windows10.0.19041.0
       RID: win10-x64
@@ -147,9 +150,7 @@ jobs:
     name: Build Windows Sideload
     needs: shared-resources
     runs-on: windows-2022
-    defaults:
-      run:
-        shell: pwsh
+    if: ${{ needs.shared-resources.outputs.app_version != '' && needs.shared-resources.outputs.upload_url != '' }}
     strategy:
       matrix:
         RID: [win10-arm64, win10-x64]
@@ -259,9 +260,7 @@ jobs:
     name: Build Android
     needs: shared-resources
     runs-on: windows-2022
-    defaults:
-      run:
-        shell: pwsh
+    if: ${{ needs.shared-resources.outputs.app_version != '' && needs.shared-resources.outputs.upload_url != '' }}
     env:
       PLATFORM_TFM: android
       RID: android-arm64
@@ -331,9 +330,7 @@ jobs:
     name: Build iOS
     needs: shared-resources
     runs-on: macos-12
-    defaults:
-      run:
-        shell: pwsh
+    if: ${{ needs.shared-resources.outputs.app_version != '' && needs.shared-resources.outputs.upload_url != '' }}
     env:
       PLATFORM_TFM: ios
       RID: ios-arm64
@@ -404,9 +401,7 @@ jobs:
     name: Build MacCatalyst
     needs: shared-resources
     runs-on: macos-12
-    defaults:
-      run:
-        shell: pwsh
+    if: ${{ needs.shared-resources.outputs.app_version != '' && needs.shared-resources.outputs.upload_url != '' }}
     strategy:
       matrix:
         RID: [maccatalyst-arm64, maccatalyst-x64]
