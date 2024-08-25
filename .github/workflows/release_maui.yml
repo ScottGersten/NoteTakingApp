@@ -60,7 +60,7 @@ jobs:
       with:
         tag_name: "v${{steps.version-creator.outputs.app_version}}"
         release_name: "NoteTakingApp v${{steps.version-creator.outputs.app_version}}"
-        body: This is v${{steps.version-creator.outputs.app_version}} of the xkcd viewer app. To install, use the appropriate installer file for your device.
+        body: This is v${{steps.version-creator.outputs.app_version}} of the NoteTake_r app. To install, use the appropriate installer file for your device.
 
 
 # ******************************************************************************************************** #
