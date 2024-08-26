@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:models="using:NoteTakingApp.Maui.Models"
              xmlns:local="clr-namespace:NoteTakingApp.Maui"
+             xmlns:telerik="http://schemas.telerik.com/2022/xaml/maui"
              x:Class="NoteTakingApp.Maui.MainPage">
 
     <Grid
@@ -83,9 +84,28 @@
                 Grid.Column="1"
                 TextColor="{StaticResource PrimaryDarkText}" />
 
+        <telerik:RadDataGrid x:Name="NotesDataGrid"
+                             AutoGenerateColumns="False"
+                             SelectionChanged="NotesDataGrid_SelectionChanged"
+                             ItemsSource="{Binding NotesList}"
+                             Grid.Row="0"
+                             Grid.Column="2"
+                             Grid.RowSpan="2"
+                             BackgroundColor="BurlyWood">
+
+            <telerik:RadDataGrid.Columns>
+                <telerik:DataGridTextColumn PropertyName="Title"
+                                            HeaderText="Title"/>
+                <telerik:DataGridTextColumn PropertyName="Text"
+                                            HeaderText="Text" />
+
+            </telerik:RadDataGrid.Columns>
+        </telerik:RadDataGrid>
+                             
 
 
-        <CollectionView x:Name="NotesCollectionView"
+
+        <!--<CollectionView x:Name="NotesCollectionView"
                         SelectionChanged="NotesCollectionView_SelectionChanged"
                         SelectionMode="Single"
                         Grid.Row="0"
@@ -112,7 +132,7 @@
                 </DataTemplate>
             </CollectionView.ItemTemplate>
             
-        </CollectionView>
+        </CollectionView>-->
 
 
 

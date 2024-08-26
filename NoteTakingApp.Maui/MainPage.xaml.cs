@@ -12,7 +12,7 @@ public partial class MainPage : ContentPage
     {
         InitializeComponent();
         notes = new ObservableCollection<Note>();
-        NotesCollectionView.ItemsSource = notes;
+        NotesDataGrid.ItemsSource = notes;
     }
 
     private void TitleEditor_TextChanged(object sender, TextChangedEventArgs e)
@@ -71,9 +71,9 @@ public partial class MainPage : ContentPage
 
     private void DeleteNoteButton_Clicked(object sender, EventArgs e)
     {
-        if (NotesCollectionView.SelectedItem != null)
+        if (NotesDataGrid.SelectedItem != null)
         {
-            Note note = (Note)NotesCollectionView.SelectedItem;
+            Note note = (Note)NotesDataGrid.SelectedItem;
             notes.Remove(note);
         }
 
@@ -91,7 +91,7 @@ public partial class MainPage : ContentPage
 
     private async void ViewNoteButton_Clicked(object sender, EventArgs e)
     {
-        if(NotesCollectionView.SelectedItem is Note selectedNote)
+        if(NotesDataGrid.SelectedItem is Note selectedNote)
         {
             var navigationParameter = new Dictionary<string, object>
             {
@@ -104,6 +104,11 @@ public partial class MainPage : ContentPage
         {
             await DisplayAlert("Error", "Please select a note to view", "OK");
         }
+
+    }
+
+    private void NotesDataGrid_SelectionChanged(object sender, Telerik.Maui.Controls.DataGrid.DataGridSelectionChangedEventArgs e)
+    {
 
     }
 }
