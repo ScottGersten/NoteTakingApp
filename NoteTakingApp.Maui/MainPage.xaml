@@ -5,6 +5,11 @@
              xmlns:local="clr-namespace:NoteTakingApp.Maui"
              xmlns:telerik="http://schemas.telerik.com/2022/xaml/maui"
              x:Class="NoteTakingApp.Maui.MainPage">
+    <ContentPage.Resources>
+        <DataTemplate x:Key="LockedContentTemplate">
+            <Label Text="{Binding Text, Converter={StaticResource LockedNoteConverter}}" />
+        </DataTemplate>
+    </ContentPage.Resources>
 
     <Grid
         RowDefinitions="auto, *"
@@ -43,6 +48,7 @@
                     Background="Transparent"
                     BorderColor="Red"
                     BorderWidth="5" />
+            
             <Button x:Name="ViewNoteButton" 
                     Text="View Note"
                     Clicked="ViewNoteButton_Clicked"
@@ -51,6 +57,15 @@
                     Background="Transparent"
                     BorderColor="Purple"
                     BorderWidth="5"/>
+
+            <Button x:Name="LockNoteButton"
+                    Text="Lock Note"
+                    Clicked="LockNoteButton_Clicked"
+                    TextColor="DeepSkyBlue"
+                    FontAttributes="Bold"
+                    Background="Transparent"
+                    BorderColor="DeepSkyBlue"
+                    BorderWidth="5" />
 
         </VerticalStackLayout>
 
@@ -97,7 +112,8 @@
                 <telerik:DataGridTextColumn PropertyName="Title"
                                             HeaderText="Title"/>
                 <telerik:DataGridTextColumn PropertyName="Text"
-                                            HeaderText="Text" />
+                                            HeaderText="Text" 
+                                            CellContentTemplate="{StaticResource LockedContentTemplate}"/>
 
             </telerik:RadDataGrid.Columns>
         </telerik:RadDataGrid>
