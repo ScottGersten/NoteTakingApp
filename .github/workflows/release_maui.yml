@@ -13,8 +13,8 @@ permissions:
   discussions: write
 
 defaults:
-      run:
-        shell: pwsh
+  run:
+    shell: pwsh
 
 env:
   CSPROJ_PATH: "NoteTakingApp.Maui/NoteTakingApp.Maui.csproj"
@@ -34,33 +34,30 @@ jobs:
   shared-resources:
     name: Create Shared Resources
     runs-on: windows-2022
-    defaults:
-      run:
-        shell: pwsh
     outputs:
-      app_version: ${{steps.version-creator.outputs.app_version}}
+      app_version: ${{steps.version-creator.outputs.inner_app_version}}
       upload_url: ${{steps.create_release.outputs.upload_url}}
     steps:
-    # Generates a version number using year.monthday.run_number.0 (e.g., 2024.824.1.0)
+    # Generates a version number using year.monthday.run_number.0 (e.g., 2024.824.37.0)
     - name: Generate version number using date and run number
       id: version-creator
       run: |
         $buildDay = Get-Date -Format "yyyy.Mdd"
         $runNumber = "$env:GITHUB_RUN_NUMBER"
         $ver = $buildDay + "." + $runNumber + ".0"
-        echo "app_version=$ver" >> $env:GITHUB_OUTPUT
+        echo "inner_app_version=$ver" >> $env:GITHUB_OUTPUT
 
     # Create a new GitHub Release tagged with the build version number (via https://github.com/actions/create-release)
     - name: Create GitHub Release
-      if: ${{ steps.version-creator.outputs.app_version != '' }}
+      if: ${{ steps.version-creator.outputs.inner_app_version != '' }}
       id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
       with:
-        tag_name: "v${{steps.version-creator.outputs.app_version}}"
-        release_name: "NoteTakingApp v${{steps.version-creator.outputs.app_version}}"
-        body: This is v${{steps.version-creator.outputs.app_version}} of the NoteTake_r app. To install, use the appropriate installer file for your device.
+        tag_name: "v${{steps.version-creator.outputs.inner_app_version}}"
+        release_name: "NoteTakingApp v${{steps.version-creator.outputs.inner_app_version}}"
+        body: This is v${{steps.version-creator.outputs.inner_app_version}} of the NoteTake_r app. To install, use the appropriate installer file for your device.
 
 
 # ******************************************************************************************************** #
@@ -162,15 +159,6 @@ jobs:
       with:
         fetch-depth: 0
     
-    # Login to Azure CLI. No secrets needed, uses the GitHub OIDC token to authenticate.
-    - name: Azure login using OIDC via GitHub
-      uses: azure/login@v2
-      id: azlogin
-      with:
-        client-id: "32daa13b-f4bb-4809-8ef6-58cb39051acd"
-        tenant-id: "bd47e796-3473-4b8a-9101-1f4c0c7af31a"
-        subscription-id: "48ab4839-62af-4ab3-afe6-043ea4d7c137"
-
     - name: Setup .NET Core SDK
       uses: actions/setup-dotnet@v4
       with:
@@ -209,6 +197,15 @@ jobs:
       run: |
         $msixPath = Get-ChildItem -Filter NoteTakingApp.Maui*.msix -Recurse | %{$_.FullName}
         echo "PACKAGE_PATH=$msixPath" >> $env:GITHUB_OUTPUT
+
+    # Login to Azure CLI. No secrets needed, uses the GitHub OIDC token to authenticate.
+    - name: Azure login using OIDC via GitHub
+      uses: azure/login@v2
+      id: azlogin
+      with:
+        client-id: "32daa13b-f4bb-4809-8ef6-58cb39051acd"
+        tenant-id: "bd47e796-3473-4b8a-9101-1f4c0c7af31a"
+        subscription-id: "48ab4839-62af-4ab3-afe6-043ea4d7c137"
 
     # CODESIGN (uses Lance's certificate for now)
     - name: Sign files with Trusted Signing
