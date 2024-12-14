@@ -326,7 +326,7 @@ jobs:
   maui-ios:
     name: Build iOS
     needs: shared-resources
-    runs-on: macos-12
+    runs-on: macos-latest
     if: ${{ needs.shared-resources.outputs.app_version != '' && needs.shared-resources.outputs.upload_url != '' }}
     env:
       RID: ios-arm64
@@ -397,7 +397,7 @@ jobs:
   maui-macos:
     name: Build MacCatalyst
     needs: shared-resources
-    runs-on: macos-12
+    runs-on: macos-latest
     if: ${{ needs.shared-resources.outputs.app_version != '' && needs.shared-resources.outputs.upload_url != '' }}
     strategy:
       matrix:
